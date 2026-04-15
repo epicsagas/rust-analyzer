@@ -46,11 +46,20 @@ impl ScopeEntry {
 #[derive(Debug, PartialEq, Eq)]
 pub struct ScopeData {
     parent: Option<ScopeId>,
-    block: Option<BlockId>,
-    label: Option<(LabelId, Name)>,
-    // FIXME: We can compress this with an enum for this and `label`/`block` if memory usage matters.
-    macro_def: Option<Box<MacroDefId>>,
+    kind: ScopeKind,
     entries: IdxRange<ScopeEntry>,
+}
+
+#[derive(Debug, PartialEq, Eq)]
+pub(crate) enum ScopeKind {
+    /// A block scope, optionally with a block ID and/or label.
+    Block(Option<BlockId>, Option<(LabelId, Name)>),
+    /// A labeled scope (e.g. loop label) without a block ID.
+    Label(LabelId, Name),
+    /// A macro definition scope.
+    MacroDef(Box<MacroDefId>),
+    /// A plain scope with no special kind.
+    None,
 }
 
 #[salsa::tracked]
@@ -100,18 +109,28 @@ impl ExprScopes {
 
     /// If `scope` refers to a block expression scope, returns the corresponding `BlockId`.
     pub fn block(&self, scope: ScopeId) -> Option<BlockId> {
-        self.scopes[scope].block
+        match &self.scopes[scope].kind {
+            ScopeKind::Block(block, _) => *block,
+            _ => None,
+        }
     }
 
     /// If `scope` refers to a macro def scope, returns the corresponding `MacroId`.
     #[allow(clippy::borrowed_box)] // If we return `&MacroDefId` we need to move it, this way we just clone the `Box`.
     pub fn macro_def(&self, scope: ScopeId) -> Option<&Box<MacroDefId>> {
-        self.scopes[scope].macro_def.as_ref()
+        match &self.scopes[scope].kind {
+            ScopeKind::MacroDef(id) => Some(id),
+            _ => None,
+        }
     }
 
     /// If `scope` refers to a labeled expression scope, returns the corresponding `Label`.
     pub fn label(&self, scope: ScopeId) -> Option<(LabelId, Name)> {
-        self.scopes[scope].label.clone()
+        match &self.scopes[scope].kind {
+            ScopeKind::Block(_, label) => label.clone(),
+            ScopeKind::Label(id, name) => Some((*id, name.clone())),
+            _ => None,
+        }
     }
 
     /// Returns the scopes in ascending order.
@@ -174,9 +193,7 @@ impl ExprScopes {
     fn root_scope(&mut self) -> ScopeId {
         self.scopes.alloc(ScopeData {
             parent: None,
-            block: None,
-            label: None,
-            macro_def: None,
+            kind: ScopeKind::None,
             entries: empty_entries(self.scope_entries.len()),
         })
     }
@@ -184,19 +201,19 @@ impl ExprScopes {
     fn new_scope(&mut self, parent: ScopeId) -> ScopeId {
         self.scopes.alloc(ScopeData {
             parent: Some(parent),
-            block: None,
-            label: None,
-            macro_def: None,
+            kind: ScopeKind::None,
             entries: empty_entries(self.scope_entries.len()),
         })
     }
 
     fn new_labeled_scope(&mut self, parent: ScopeId, label: Option<(LabelId, Name)>) -> ScopeId {
+        let kind = match label {
+            Some((id, name)) => ScopeKind::Label(id, name),
+            None => ScopeKind::None,
+        };
         self.scopes.alloc(ScopeData {
             parent: Some(parent),
-            block: None,
-            label,
-            macro_def: None,
+            kind,
             entries: empty_entries(self.scope_entries.len()),
         })
     }
@@ -209,9 +226,7 @@ impl ExprScopes {
     ) -> ScopeId {
         self.scopes.alloc(ScopeData {
             parent: Some(parent),
-            block,
-            label,
-            macro_def: None,
+            kind: ScopeKind::Block(block, label),
             entries: empty_entries(self.scope_entries.len()),
         })
     }
@@ -219,9 +234,7 @@ impl ExprScopes {
     fn new_macro_def_scope(&mut self, parent: ScopeId, macro_id: Box<MacroDefId>) -> ScopeId {
         self.scopes.alloc(ScopeData {
             parent: Some(parent),
-            block: None,
-            label: None,
-            macro_def: Some(macro_id),
+            kind: ScopeKind::MacroDef(macro_id),
             entries: empty_entries(self.scope_entries.len()),
         })
     }

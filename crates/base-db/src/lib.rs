@@ -87,7 +87,7 @@ where
 
 pub const DEFAULT_FILE_TEXT_LRU_CAP: u16 = 16;
 pub const DEFAULT_PARSE_LRU_CAP: u16 = 128;
-pub const DEFAULT_BORROWCK_LRU_CAP: u16 = 2024;
+pub const DEFAULT_BORROWCK_LRU_CAP: u16 = 512;
 
 #[derive(Debug, Default)]
 pub struct Files {

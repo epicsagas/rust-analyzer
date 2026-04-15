@@ -58,7 +58,7 @@ pub trait HirDatabase: DefDatabase + std::fmt::Debug {
     ) -> Result<Arc<MirBody>, MirLowerError>;
 
     #[salsa::invoke(crate::mir::borrowck_query)]
-    #[salsa::lru(2024)]
+    #[salsa::lru(512)]
     fn borrowck(&self, def: DefWithBodyId) -> Result<Arc<[BorrowckResult]>, MirLowerError>;
 
     #[salsa::invoke(crate::consteval::const_eval)]

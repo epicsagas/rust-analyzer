@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(find /Users/hackme/projects/rust-analyzer -name \"*.rs\" -exec grep -l \"salsa::query\" {} \\\\;)",
+      "Bash(find:*)",
+      "Bash(grep:*)",
+      "Bash(cargo check:*)",
+      "Bash(cargo test:*)",
+      "Bash(cargo build:*)",
+      "Bash(cargo install:*)",
+      "Bash(rust-analyzer analysis-stats:*)",
+      "Bash(awk '{printf \"PID: %s, RSS: %s MB, VSZ: %s MB, CMD: %s\\\\n\", $2, $6/1024, $5/1024, $11}')"
+    ]
+  }
+}
