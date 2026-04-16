@@ -90,7 +90,7 @@ pub(crate) fn opaque_types_defined_by(
 
 // These are firewall queries to prevent drawing dependencies between infers:
 
-#[salsa::tracked(returns(ref))]
+#[salsa::tracked(returns(ref), lru = 256)]
 pub(crate) fn rpit_hidden_types<'db>(
     db: &'db dyn HirDatabase,
     function: FunctionId,
@@ -104,7 +104,7 @@ pub(crate) fn rpit_hidden_types<'db>(
     result
 }
 
-#[salsa::tracked(returns(ref))]
+#[salsa::tracked(returns(ref), lru = 256)]
 pub(crate) fn tait_hidden_types<'db>(
     db: &'db dyn HirDatabase,
     type_alias: TypeAliasId,

@@ -189,7 +189,7 @@ fn macro_input_callback(
                         'eat_comma: {
                             // If there is a comma after this node, eat it too.
                             let mut events_until_comma = 0;
-                            for event in preorder.clone() {
+                            for event in preorder.by_ref() {
                                 match event {
                                     WalkEvent::Enter(SyntaxElement::Node(_))
                                     | WalkEvent::Leave(_) => {}

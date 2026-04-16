@@ -525,7 +525,7 @@ pub(crate) fn find_matching_impl<'db>(
     }
 }
 
-#[salsa::tracked(returns(ref))]
+#[salsa::tracked(returns(ref), lru = 64)]
 fn crates_containing_incoherent_inherent_impls(db: &dyn HirDatabase, krate: Crate) -> Box<[Crate]> {
     let _p = tracing::info_span!("crates_containing_incoherent_inherent_impls").entered();
     // We assume that only sysroot crates contain `#[rustc_has_incoherent_inherent_impls]`
@@ -574,7 +574,7 @@ pub struct InherentImpls {
 
 #[salsa::tracked]
 impl InherentImpls {
-    #[salsa::tracked(returns(ref))]
+    #[salsa::tracked(returns(ref), lru = 128)]
     pub fn for_crate(db: &dyn HirDatabase, krate: Crate) -> Self {
         let _p = tracing::info_span!("inherent_impls_in_crate_query", ?krate).entered();
 
@@ -583,7 +583,7 @@ impl InherentImpls {
         Self::collect_def_map(db, crate_def_map)
     }
 
-    #[salsa::tracked(returns(ref))]
+    #[salsa::tracked(returns(ref), lru = 256)]
     pub fn for_block(db: &dyn HirDatabase, block: BlockId) -> Option<Box<Self>> {
         let _p = tracing::info_span!("inherent_impls_in_block_query").entered();
 
@@ -683,7 +683,7 @@ pub struct TraitImpls {
 
 #[salsa::tracked]
 impl TraitImpls {
-    #[salsa::tracked(returns(ref))]
+    #[salsa::tracked(returns(ref), lru = 128)]
     pub fn for_crate(db: &dyn HirDatabase, krate: Crate) -> Arc<Self> {
         let _p = tracing::info_span!("inherent_impls_in_crate_query", ?krate).entered();
 
@@ -692,7 +692,7 @@ impl TraitImpls {
         Arc::new(result)
     }
 
-    #[salsa::tracked(returns(ref))]
+    #[salsa::tracked(returns(ref), lru = 256)]
     pub fn for_block(db: &dyn HirDatabase, block: BlockId) -> Option<Box<Self>> {
         let _p = tracing::info_span!("inherent_impls_in_block_query").entered();
 
@@ -701,7 +701,7 @@ impl TraitImpls {
         if result.map.is_empty() { None } else { Some(Box::new(result)) }
     }
 
-    #[salsa::tracked(returns(ref))]
+    #[salsa::tracked(returns(ref), lru = 1024)]
     pub fn for_crate_and_deps(db: &dyn HirDatabase, krate: Crate) -> Box<[Arc<Self>]> {
         krate.transitive_deps(db).iter().map(|&dep| Self::for_crate(db, dep).clone()).collect()
     }

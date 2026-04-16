@@ -566,7 +566,7 @@ impl AttrFlags {
             .copied()
             .unwrap_or_else(AttrFlags::empty);
 
-        #[salsa::tracked(returns(ref))]
+        #[salsa::tracked(returns(ref), lru = 2048)]
         fn field_attr_flags(
             db: &dyn DefDatabase,
             variant: VariantId,
@@ -597,7 +597,7 @@ impl AttrFlags {
         }
         return generic_params_attr_flags(db, def);
 
-        #[salsa::tracked(returns(ref))]
+        #[salsa::tracked(returns(ref), lru = 2048)]
         fn generic_params_attr_flags(
             db: &dyn DefDatabase,
             def: GenericDefId,
@@ -741,7 +741,7 @@ impl AttrFlags {
     }
 
     /// Call this only if there are legacy const generics, to save memory.
-    #[salsa::tracked(returns(ref))]
+    #[salsa::tracked(returns(ref), lru = 2048)]
     pub(crate) fn legacy_const_generic_indices(
         db: &dyn DefDatabase,
         owner: FunctionId,
@@ -761,7 +761,7 @@ impl AttrFlags {
     }
 
     // There aren't typically many crates, so it's okay to always make this a query without a flag.
-    #[salsa::tracked(returns(ref))]
+    #[salsa::tracked(returns(ref), lru = 2048)]
     pub fn doc_html_root_url(db: &dyn DefDatabase, krate: Crate) -> Option<SmolStr> {
         let root_file_id = krate.root_file_id(db);
         let syntax = root_file_id.parse(db).tree();
@@ -802,7 +802,7 @@ impl AttrFlags {
 
         return target_features(db, owner);
 
-        #[salsa::tracked(returns(ref))]
+        #[salsa::tracked(returns(ref), lru = 2048)]
         fn target_features(db: &dyn DefDatabase, owner: FunctionId) -> FxHashSet<Symbol> {
             let mut result = FxHashSet::default();
             collect_attrs::<Infallible>(db, owner.into(), |attr| {
@@ -890,14 +890,14 @@ impl AttrFlags {
                 .unwrap_or_default(),
         };
 
-        #[salsa::tracked(returns(ref))]
+        #[salsa::tracked(returns(ref), lru = 2048)]
         fn doc_aliases(db: &dyn DefDatabase, owner: AttrDefId) -> Box<[Symbol]> {
             let mut result = Vec::new();
             collect_attrs::<Infallible>(db, owner, |attr| extract_doc_aliases(&mut result, attr));
             result.into_boxed_slice()
         }
 
-        #[salsa::tracked(returns(ref))]
+        #[salsa::tracked(returns(ref), lru = 2048)]
         fn fields_doc_aliases(
             db: &dyn DefDatabase,
             variant: VariantId,
@@ -1039,7 +1039,7 @@ impl AttrFlags {
 
         return derive_info(db, owner).as_ref();
 
-        #[salsa::tracked(returns(ref))]
+        #[salsa::tracked(returns(ref), lru = 2048)]
         fn derive_info(db: &dyn DefDatabase, owner: MacroId) -> Option<DeriveInfo> {
             collect_attrs(db, owner.into(), |attr| {
                 if let ast::Meta::TokenTreeMeta(attr) = attr
@@ -1079,7 +1079,7 @@ impl AttrFlags {
 }
 
 fn merge_repr(this: &mut ReprOptions, other: ReprOptions) {
-    let ReprOptions { int, align, pack, flags, field_shuffle_seed: _ } = this;
+    let ReprOptions { int, align, pack, flags, field_shuffle_seed: _, scalable: _ } = this;
     flags.insert(other.flags);
     *align = (*align).max(other.align);
     *pack = match (*pack, other.pack) {

@@ -38,6 +38,8 @@ const _: () = {
     use crate::MacroCallId;
     use salsa::plumbing as zalsa_;
     use salsa::plumbing::interned as zalsa_struct_;
+    use salsa::Lookup;
+    use salsa::HashEqLike;
 
     #[derive(Clone, Eq, Debug)]
     pub struct SyntaxContextData {
@@ -60,10 +62,10 @@ const _: () = {
 
     impl std::hash::Hash for SyntaxContextData {
         fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-            self.outer_expn.hash(state);
-            self.outer_transparency.hash(state);
-            self.edition.hash(state);
-            self.parent.hash(state);
+            std::hash::Hash::hash(&self.outer_expn, state);
+            std::hash::Hash::hash(&self.outer_transparency, state);
+            std::hash::Hash::hash(&self.edition, state);
+            std::hash::Hash::hash(&self.parent, state);
         }
     }
 
@@ -81,25 +83,25 @@ const _: () = {
     #[derive(Hash)]
     struct StructKey<'db, T0, T1, T2, T3>(T0, T1, T2, T3, std::marker::PhantomData<&'db ()>);
 
-    impl<'db, T0, T1, T2, T3> zalsa_::interned::HashEqLike<StructKey<'db, T0, T1, T2, T3>>
+    impl<'db, T0, T1, T2, T3> HashEqLike<StructKey<'db, T0, T1, T2, T3>>
         for SyntaxContextData
     where
-        Option<MacroCallId>: zalsa_::interned::HashEqLike<T0>,
-        Transparency: zalsa_::interned::HashEqLike<T1>,
-        Edition: zalsa_::interned::HashEqLike<T2>,
-        SyntaxContext: zalsa_::interned::HashEqLike<T3>,
+        Option<MacroCallId>: HashEqLike<T0>,
+        Transparency: HashEqLike<T1>,
+        Edition: HashEqLike<T2>,
+        SyntaxContext: HashEqLike<T3>,
     {
         fn hash<H: std::hash::Hasher>(&self, h: &mut H) {
-            zalsa_::interned::HashEqLike::<T0>::hash(&self.outer_expn, &mut *h);
-            zalsa_::interned::HashEqLike::<T1>::hash(&self.outer_transparency, &mut *h);
-            zalsa_::interned::HashEqLike::<T2>::hash(&self.edition, &mut *h);
-            zalsa_::interned::HashEqLike::<T3>::hash(&self.parent, &mut *h);
+            HashEqLike::<T0>::hash(&self.outer_expn, &mut *h);
+            HashEqLike::<T1>::hash(&self.outer_transparency, &mut *h);
+            HashEqLike::<T2>::hash(&self.edition, &mut *h);
+            HashEqLike::<T3>::hash(&self.parent, &mut *h);
         }
         fn eq(&self, data: &StructKey<'db, T0, T1, T2, T3>) -> bool {
-            zalsa_::interned::HashEqLike::<T0>::eq(&self.outer_expn, &data.0)
-                && zalsa_::interned::HashEqLike::<T1>::eq(&self.outer_transparency, &data.1)
-                && zalsa_::interned::HashEqLike::<T2>::eq(&self.edition, &data.2)
-                && zalsa_::interned::HashEqLike::<T3>::eq(&self.parent, &data.3)
+            HashEqLike::<T0>::eq(&self.outer_expn, &data.0)
+                && HashEqLike::<T1>::eq(&self.outer_transparency, &data.1)
+                && HashEqLike::<T2>::eq(&self.edition, &data.2)
+                && HashEqLike::<T3>::eq(&self.parent, &data.3)
         }
     }
     impl zalsa_struct_::Configuration for SyntaxContext {
@@ -203,10 +205,10 @@ const _: () = {
     impl<'db> SyntaxContext {
         pub fn new<
             Db,
-            T0: zalsa_::interned::Lookup<Option<MacroCallId>> + std::hash::Hash,
-            T1: zalsa_::interned::Lookup<Transparency> + std::hash::Hash,
-            T2: zalsa_::interned::Lookup<Edition> + std::hash::Hash,
-            T3: zalsa_::interned::Lookup<SyntaxContext> + std::hash::Hash,
+            T0: Lookup<Option<MacroCallId>> + std::hash::Hash,
+            T1: Lookup<Transparency> + std::hash::Hash,
+            T2: Lookup<Edition> + std::hash::Hash,
+            T3: Lookup<SyntaxContext> + std::hash::Hash,
         >(
             db: &'db Db,
             outer_expn: T0,
@@ -218,10 +220,10 @@ const _: () = {
         ) -> Self
         where
             Db: ?Sized + salsa::Database,
-            Option<MacroCallId>: zalsa_::interned::HashEqLike<T0>,
-            Transparency: zalsa_::interned::HashEqLike<T1>,
-            Edition: zalsa_::interned::HashEqLike<T2>,
-            SyntaxContext: zalsa_::interned::HashEqLike<T3>,
+            Option<MacroCallId>: HashEqLike<T0>,
+            Transparency: HashEqLike<T1>,
+            Edition: HashEqLike<T2>,
+            SyntaxContext: HashEqLike<T3>,
         {
             let (zalsa, zalsa_local) = db.zalsas();
 
@@ -236,10 +238,10 @@ const _: () = {
                     std::marker::PhantomData,
                 ),
                 |id, data| SyntaxContextData {
-                    outer_expn: zalsa_::interned::Lookup::into_owned(data.0),
-                    outer_transparency: zalsa_::interned::Lookup::into_owned(data.1),
-                    edition: zalsa_::interned::Lookup::into_owned(data.2),
-                    parent: zalsa_::interned::Lookup::into_owned(data.3),
+                    outer_expn: Lookup::into_owned(data.0),
+                    outer_transparency: Lookup::into_owned(data.1),
+                    edition: Lookup::into_owned(data.2),
+                    parent: Lookup::into_owned(data.3),
                     opaque: opaque(zalsa_::FromId::from_id(id)),
                     opaque_and_semiopaque: opaque_and_semiopaque(zalsa_::FromId::from_id(id)),
                 },

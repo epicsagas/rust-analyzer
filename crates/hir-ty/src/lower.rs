@@ -1165,7 +1165,7 @@ pub(crate) fn impl_trait_with_diagnostics<'db>(
         )
     });
 
-    #[salsa::tracked(returns(ref))]
+    #[salsa::tracked(returns(ref), lru = 1024)]
     pub(crate) fn impl_trait_with_diagnostics_query<'db>(
         db: &'db dyn HirDatabase,
         impl_id: ImplId,
@@ -1249,7 +1249,7 @@ impl InternedOpaqueTyId {
 
 #[salsa::tracked]
 impl ImplTraits {
-    #[salsa::tracked(returns(ref))]
+    #[salsa::tracked(returns(ref), lru = 1024)]
     pub(crate) fn return_type_impl_traits(
         db: &dyn HirDatabase,
         def: hir_def::FunctionId,
@@ -1278,7 +1278,7 @@ impl ImplTraits {
         }
     }
 
-    #[salsa::tracked(returns(ref))]
+    #[salsa::tracked(returns(ref), lru = 1024)]
     pub(crate) fn type_alias_impl_traits(
         db: &dyn HirDatabase,
         def: hir_def::TypeAliasId,
@@ -1453,7 +1453,7 @@ pub(crate) fn value_ty<'db>(
 ) -> Option<EarlyBinder<'db, Ty<'db>>> {
     return value_ty_query(db, def).as_ref().map(|it| it.get());
 
-    #[salsa::tracked(returns(ref))]
+    #[salsa::tracked(returns(ref), lru = 4096)]
     pub(crate) fn value_ty_query<'db>(
         db: &'db dyn HirDatabase,
         def: ValueTyDefId,
@@ -1476,7 +1476,7 @@ pub(crate) fn type_for_type_alias_with_diagnostics<'db>(
     let (ty, diags) = type_for_type_alias_with_diagnostics_query(db, t);
     return (ty.get(), diags.clone());
 
-    #[salsa::tracked(returns(ref), cycle_result = type_for_type_alias_with_diagnostics_cycle_result)]
+    #[salsa::tracked(returns(ref), lru = 2048, cycle_result = type_for_type_alias_with_diagnostics_cycle_result)]
     pub(crate) fn type_for_type_alias_with_diagnostics_query<'db>(
         db: &'db dyn HirDatabase,
         t: TypeAliasId,
@@ -1630,7 +1630,7 @@ pub(crate) fn field_types_query(
 }
 
 /// Build the type of all specific fields of a struct or enum variant.
-#[salsa::tracked(returns(ref))]
+#[salsa::tracked(returns(ref), lru = 2048)]
 pub(crate) fn field_types_with_diagnostics_query<'db>(
     db: &'db dyn HirDatabase,
     variant_id: VariantId,
@@ -1954,7 +1954,7 @@ fn type_alias_bounds_with_diagnostics<'db>(
         diags.clone(),
     );
 
-    #[salsa::tracked(returns(ref))]
+    #[salsa::tracked(returns(ref), lru = 2048)]
     pub fn type_alias_bounds_with_diagnostics_query<'db>(
         db: &'db dyn HirDatabase,
         type_alias: TypeAliasId,
@@ -2038,7 +2038,7 @@ impl<'db> GenericPredicates {
     /// Resolve the where clause(s) of an item with generics.
     ///
     /// Diagnostics are computed only for this item's predicates, not for parents.
-    #[salsa::tracked(returns(ref), cycle_result=generic_predicates_cycle_result)]
+    #[salsa::tracked(returns(ref), lru = 4096, cycle_result=generic_predicates_cycle_result)]
     pub fn query_with_diagnostics(
         db: &'db dyn HirDatabase,
         def: GenericDefId,
@@ -2171,7 +2171,7 @@ pub(crate) fn trait_environment<'db>(
 
     return ParamEnv { clauses: trait_environment_query(db, def).as_ref() };
 
-    #[salsa::tracked(returns(ref))]
+    #[salsa::tracked(returns(ref), lru = 4096)]
     pub(crate) fn trait_environment_query<'db>(
         db: &'db dyn HirDatabase,
         def: GenericDefId,
@@ -2486,7 +2486,7 @@ pub(crate) fn callable_item_signature<'db>(
 ) -> EarlyBinder<'db, PolyFnSig<'db>> {
     return callable_item_signature_query(db, def).get_with(|sig| sig.get());
 
-    #[salsa::tracked(returns(ref))]
+    #[salsa::tracked(returns(ref), lru = 4096)]
     pub(crate) fn callable_item_signature_query<'db>(
         db: &'db dyn HirDatabase,
         def: CallableDefId,
