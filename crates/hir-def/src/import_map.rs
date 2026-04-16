@@ -64,7 +64,7 @@ type ImportMapIndex = FxIndexMap<ItemInNs, (SmallVec<[ImportInfo; 1]>, IsTraitAs
 
 #[salsa::tracked]
 impl ImportMap {
-    #[salsa::tracked(returns(ref))]
+    #[salsa::tracked(returns(ref), lru = 256)]
     pub fn of(db: &dyn DefDatabase, krate: Crate) -> Self {
         Self::import_map_query_impl(db, krate)
     }

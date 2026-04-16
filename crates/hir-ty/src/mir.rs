@@ -265,12 +265,11 @@ pub struct ProjectionId(u32);
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ProjectionStore {
     id_to_proj: FxHashMap<ProjectionId, Box<[PlaceElem]>>,
-    proj_to_id: FxHashMap<Box<[PlaceElem]>, ProjectionId>,
 }
 
 impl Default for ProjectionStore {
     fn default() -> Self {
-        let mut this = Self { id_to_proj: Default::default(), proj_to_id: Default::default() };
+        let mut this = Self { id_to_proj: Default::default() };
         // Ensure that [] will get the id 0 which is used in `ProjectionId::Empty`
         this.intern(Box::new([]));
         this
@@ -280,24 +279,19 @@ impl Default for ProjectionStore {
 impl ProjectionStore {
     pub fn shrink_to_fit(&mut self) {
         self.id_to_proj.shrink_to_fit();
-        self.proj_to_id.shrink_to_fit();
     }
 
     pub fn intern_if_exist(&self, projection: &[PlaceElem]) -> Option<ProjectionId> {
-        self.proj_to_id.get(projection).copied()
+        self.id_to_proj.iter().find(|(_, p)| *p == projection).map(|(id, _)| *id)
     }
 
     pub fn intern(&mut self, projection: Box<[PlaceElem]>) -> ProjectionId {
-        let new_id = ProjectionId(self.proj_to_id.len() as u32);
-        match self.proj_to_id.entry(projection) {
-            Entry::Occupied(id) => *id.get(),
-            Entry::Vacant(e) => {
-                let key_clone = e.key().clone();
-                e.insert(new_id);
-                self.id_to_proj.insert(new_id, key_clone);
-                new_id
-            }
+        if let Some(id) = self.intern_if_exist(&projection) {
+            return id;
         }
+        let new_id = ProjectionId(self.id_to_proj.len() as u32);
+        self.id_to_proj.insert(new_id, projection);
+        new_id
     }
 }
 

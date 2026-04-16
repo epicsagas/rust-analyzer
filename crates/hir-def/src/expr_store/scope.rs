@@ -53,7 +53,7 @@ pub struct ScopeData {
 #[derive(Debug, PartialEq, Eq)]
 pub(crate) enum ScopeKind {
     /// A block scope, optionally with a block ID and/or label.
-    Block(Option<BlockId>, Option<(LabelId, Name)>),
+    Block(Option<BlockId>, Option<Box<(LabelId, Name)>>),
     /// A labeled scope (e.g. loop label) without a block ID.
     Label(LabelId, Name),
     /// A macro definition scope.
@@ -64,7 +64,7 @@ pub(crate) enum ScopeKind {
 
 #[salsa::tracked]
 impl ExprScopes {
-    #[salsa::tracked(returns(ref))]
+    #[salsa::tracked(returns(ref), lru = 2048)]
     pub fn body_expr_scopes(db: &dyn DefDatabase, def: DefWithBodyId) -> ExprScopes {
         let body = Body::of(db, def);
         let mut scopes = ExprScopes::new_body(body);
@@ -72,7 +72,7 @@ impl ExprScopes {
         scopes
     }
 
-    #[salsa::tracked(returns(ref))]
+    #[salsa::tracked(returns(ref), lru = 1024)]
     pub fn sig_expr_scopes(db: &dyn DefDatabase, def: GenericDefId) -> ExprScopes {
         let (_, store) = GenericParams::with_store(db, def);
         let roots = store.expr_roots();
@@ -81,7 +81,7 @@ impl ExprScopes {
         scopes
     }
 
-    #[salsa::tracked(returns(ref))]
+    #[salsa::tracked(returns(ref), lru = 256)]
     pub fn variant_scopes(db: &dyn DefDatabase, def: VariantId) -> ExprScopes {
         let fields = VariantFields::of(db, def);
         let roots = fields.store.expr_roots();
@@ -127,7 +127,7 @@ impl ExprScopes {
     /// If `scope` refers to a labeled expression scope, returns the corresponding `Label`.
     pub fn label(&self, scope: ScopeId) -> Option<(LabelId, Name)> {
         match &self.scopes[scope].kind {
-            ScopeKind::Block(_, label) => label.clone(),
+            ScopeKind::Block(_, label) => label.as_ref().map(|b| (b.0, b.1.clone())),
             ScopeKind::Label(id, name) => Some((*id, name.clone())),
             _ => None,
         }
@@ -226,7 +226,7 @@ impl ExprScopes {
     ) -> ScopeId {
         self.scopes.alloc(ScopeData {
             parent: Some(parent),
-            kind: ScopeKind::Block(block, label),
+            kind: ScopeKind::Block(block, label.map(Box::new)),
             entries: empty_entries(self.scope_entries.len()),
         })
     }

@@ -646,7 +646,7 @@ pub struct InferenceResult {
 
 #[salsa::tracked]
 impl InferenceResult {
-    #[salsa::tracked(returns(ref), cycle_result = infer_cycle_result)]
+    #[salsa::tracked(returns(ref), lru = 4096, cycle_result = infer_cycle_result)]
     fn for_body(db: &dyn HirDatabase, def: DefWithBodyId) -> InferenceResult {
         infer_query(db, def)
     }
@@ -656,12 +656,12 @@ impl InferenceResult {
     /// Returns an `InferenceResult` containing type information for array lengths,
     /// const generic arguments, and other const expressions appearing in type
     /// positions within the item's signature.
-    #[salsa::tracked(returns(ref), cycle_result = infer_signature_cycle_result)]
+    #[salsa::tracked(returns(ref), lru = 2048, cycle_result = infer_signature_cycle_result)]
     fn for_signature(db: &dyn HirDatabase, def: GenericDefId) -> InferenceResult {
         infer_signature_query(db, def)
     }
 
-    #[salsa::tracked(returns(ref), cycle_result = infer_variant_fields_cycle_result)]
+    #[salsa::tracked(returns(ref), lru = 1024, cycle_result = infer_variant_fields_cycle_result)]
     fn for_variant_fields(db: &dyn HirDatabase, def: VariantId) -> InferenceResult {
         infer_variant_fields_query(db, def)
     }

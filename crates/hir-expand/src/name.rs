@@ -20,14 +20,12 @@ pub struct Name {
     symbol: Symbol,
     // If you are making this carry actual hygiene, beware that the special handling for variables and labels
     // in bodies can go.
-    ctx: (),
 }
 
 impl fmt::Debug for Name {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("Name")
             .field("symbol", &self.symbol.as_str())
-            .field("ctx", &self.ctx)
             .finish()
     }
 }
@@ -71,7 +69,7 @@ impl PartialEq<Name> for &Symbol {
 
 impl Name {
     fn new_text(text: &str) -> Name {
-        Name { symbol: Symbol::intern(text), ctx: () }
+        Name { symbol: Symbol::intern(text) }
     }
 
     pub fn new(text: &str, mut ctx: SyntaxContext) -> Name {
@@ -111,7 +109,7 @@ impl Name {
             15 => sym::INTEGER_15,
             _ => Symbol::intern(&idx.to_string()),
         };
-        Name { symbol, ctx: () }
+        Name { symbol }
     }
 
     pub fn new_lifetime(lt: &str) -> Name {
@@ -124,7 +122,7 @@ impl Name {
     pub fn new_symbol(symbol: Symbol, ctx: SyntaxContext) -> Self {
         debug_assert!(!symbol.as_str().starts_with("r#"));
         _ = ctx;
-        Self { symbol, ctx: () }
+        Self { symbol }
     }
 
     // FIXME: This needs to go once we have hygiene
@@ -142,7 +140,7 @@ impl Name {
     /// name is equal only to itself. It's not clear how to implement this in
     /// salsa though, so we punt on that bit for a moment.
     pub const fn missing() -> Name {
-        Name { symbol: sym::MISSING_NAME, ctx: () }
+        Name { symbol: sym::MISSING_NAME }
     }
 
     /// Returns true if this is a fake name for things missing in the source code. See

@@ -45,7 +45,7 @@ impl TraitItems {
         &Self::query_with_diagnostics(db, tr).0
     }
 
-    #[salsa::tracked(returns(ref))]
+    #[salsa::tracked(returns(ref), lru = 1024)]
     pub fn query_with_diagnostics(
         db: &dyn DefDatabase,
         tr: TraitId,
@@ -112,7 +112,7 @@ pub struct ImplItems {
 
 #[salsa::tracked]
 impl ImplItems {
-    #[salsa::tracked(returns(ref))]
+    #[salsa::tracked(returns(ref), lru = 1024)]
     pub fn of(db: &dyn DefDatabase, id: ImplId) -> (ImplItems, DefDiagnostics) {
         let _p = tracing::info_span!("impl_items_with_diagnostics_query").entered();
         let ItemLoc { container: module_id, id: ast_id } = id.lookup(db);

@@ -78,7 +78,7 @@ impl StructSignature {
         Self::with_source_map(db, id).0.clone()
     }
 
-    #[salsa::tracked(returns(ref))]
+    #[salsa::tracked(returns(ref), lru = 512)]
     pub fn with_source_map(
         db: &dyn DefDatabase,
         id: StructId,
@@ -165,7 +165,7 @@ impl UnionSignature {
         Self::with_source_map(db, id).0.clone()
     }
 
-    #[salsa::tracked(returns(ref))]
+    #[salsa::tracked(returns(ref), lru = 512)]
     pub fn with_source_map(
         db: &dyn DefDatabase,
         id: UnionId,
@@ -229,7 +229,7 @@ impl EnumSignature {
         Self::with_source_map(db, id).0.clone()
     }
 
-    #[salsa::tracked(returns(ref))]
+    #[salsa::tracked(returns(ref), lru = 512)]
     pub fn with_source_map(
         db: &dyn DefDatabase,
         id: EnumId,
@@ -303,7 +303,7 @@ impl ConstSignature {
         Self::with_source_map(db, id).0.clone()
     }
 
-    #[salsa::tracked(returns(ref))]
+    #[salsa::tracked(returns(ref), lru = 512)]
     pub fn with_source_map(
         db: &dyn DefDatabase,
         id: ConstId,
@@ -371,7 +371,7 @@ impl StaticSignature {
         Self::with_source_map(db, id).0.clone()
     }
 
-    #[salsa::tracked(returns(ref))]
+    #[salsa::tracked(returns(ref), lru = 512)]
     pub fn with_source_map(
         db: &dyn DefDatabase,
         id: StaticId,
@@ -443,7 +443,7 @@ impl ImplSignature {
         Self::with_source_map(db, id).0.clone()
     }
 
-    #[salsa::tracked(returns(ref))]
+    #[salsa::tracked(returns(ref), lru = 512)]
     pub fn with_source_map(
         db: &dyn DefDatabase,
         id: ImplId,
@@ -514,7 +514,7 @@ impl TraitSignature {
         Self::with_source_map(db, id).0.clone()
     }
 
-    #[salsa::tracked(returns(ref))]
+    #[salsa::tracked(returns(ref), lru = 512)]
     pub fn with_source_map(
         db: &dyn DefDatabase,
         id: TraitId,
@@ -601,7 +601,7 @@ impl FunctionSignature {
         Self::with_source_map(db, id).0.clone()
     }
 
-    #[salsa::tracked(returns(ref))]
+    #[salsa::tracked(returns(ref), lru = 512)]
     pub fn with_source_map(
         db: &dyn DefDatabase,
         id: FunctionId,
@@ -776,7 +776,7 @@ impl TypeAliasSignature {
         Self::with_source_map(db, id).0.clone()
     }
 
-    #[salsa::tracked(returns(ref))]
+    #[salsa::tracked(returns(ref), lru = 512)]
     pub fn with_source_map(
         db: &dyn DefDatabase,
         id: TypeAliasId,
@@ -847,7 +847,7 @@ pub struct VariantFields {
 
 #[salsa::tracked]
 impl VariantFields {
-    #[salsa::tracked(returns(ref))]
+    #[salsa::tracked(returns(ref), lru = 512)]
     pub fn with_source_map(
         db: &dyn DefDatabase,
         id: VariantId,
@@ -1032,7 +1032,7 @@ pub struct EnumVariants {
 
 #[salsa::tracked]
 impl EnumVariants {
-    #[salsa::tracked(returns(ref))]
+    #[salsa::tracked(returns(ref), lru = 1024)]
     pub(crate) fn of(
         db: &dyn DefDatabase,
         e: EnumId,

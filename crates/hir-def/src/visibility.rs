@@ -280,7 +280,7 @@ impl Visibility {
 #[salsa::tracked]
 impl VariantFields {
     /// Resolve visibility of all specific fields of a struct or union variant.
-    #[salsa::tracked(returns(ref))]
+    #[salsa::tracked(returns(ref), lru = 512)]
     pub fn field_visibilities(
         db: &dyn DefDatabase,
         variant_id: VariantId,

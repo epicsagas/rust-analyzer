@@ -279,7 +279,7 @@ impl ExprCollector<'_> {
         };
 
         let idx = self.alloc_expr(
-            Expr::InlineAsm(InlineAsm { operands: operands.into_boxed_slice(), options, kind }),
+            Expr::InlineAsm(Box::new(InlineAsm { operands: operands.into_boxed_slice(), options, kind })),
             syntax_ptr,
         );
         self.store

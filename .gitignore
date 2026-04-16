@@ -14,3 +14,6 @@ docs/book/book
 docs/book/src/assists_generated.md
 docs/book/src/diagnostics_generated.md
 docs/book/src/features_generated.md
+# collet
+.collet/.secrets
+.collet/*.secrets.tmp

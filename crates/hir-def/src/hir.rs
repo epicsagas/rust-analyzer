@@ -325,8 +325,8 @@ pub enum Expr {
     Array(Array),
     Literal(Literal),
     Underscore,
-    OffsetOf(OffsetOf),
-    InlineAsm(InlineAsm),
+    OffsetOf(Box<OffsetOf>),
+    InlineAsm(Box<InlineAsm>),
 }
 
 impl Expr {
@@ -637,11 +637,11 @@ pub enum BindingProblems {
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct Binding {
     pub name: Name,
-    pub mode: BindingAnnotation,
-    pub problems: Option<BindingProblems>,
     /// Note that this may not be the direct `SyntaxContextId` of the binding's expansion, because transparent
     /// expansions are attributed to their parent expansion (recursively).
     pub hygiene: HygieneId,
+    pub mode: BindingAnnotation,
+    pub problems: Option<BindingProblems>,
 }
 
 #[derive(Debug, Clone, Eq, PartialEq)]

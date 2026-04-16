@@ -35,13 +35,16 @@ pub trait HirDatabase: DefDatabase + std::fmt::Debug {
     // and `monomorphized_mir_body_for_closure` into `monomorphized_mir_body`
     #[salsa::invoke(crate::mir::mir_body_query)]
     #[salsa::cycle(cycle_result = crate::mir::mir_body_cycle_result)]
+    #[salsa::lru(512)]
     fn mir_body(&self, def: DefWithBodyId) -> Result<Arc<MirBody>, MirLowerError>;
 
     #[salsa::invoke(crate::mir::mir_body_for_closure_query)]
+    #[salsa::lru(512)]
     fn mir_body_for_closure(&self, def: InternedClosureId) -> Result<Arc<MirBody>, MirLowerError>;
 
     #[salsa::invoke(crate::mir::monomorphized_mir_body_query)]
     #[salsa::cycle(cycle_result = crate::mir::monomorphized_mir_body_cycle_result)]
+    #[salsa::lru(512)]
     fn monomorphized_mir_body(
         &self,
         def: DefWithBodyId,
@@ -50,6 +53,7 @@ pub trait HirDatabase: DefDatabase + std::fmt::Debug {
     ) -> Result<Arc<MirBody>, MirLowerError>;
 
     #[salsa::invoke(crate::mir::monomorphized_mir_body_for_closure_query)]
+    #[salsa::lru(512)]
     fn monomorphized_mir_body_for_closure(
         &self,
         def: InternedClosureId,
