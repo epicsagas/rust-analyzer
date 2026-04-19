@@ -70,7 +70,7 @@ impl<'db> InferCtxt<'db> {
 
         let var_values = CanonicalVarValues::instantiate(
             self.interner,
-            canonical.variables,
+            canonical.var_kinds,
             |var_values, info| self.instantiate_canonical_var(info, var_values, |ui| universes[ui]),
         );
         let result = canonical.instantiate(self.interner, &var_values);
@@ -110,9 +110,9 @@ impl<'db> InferCtxt<'db> {
 
             CanonicalVarKind::Float => self.next_float_var().into(),
 
-            CanonicalVarKind::PlaceholderTy(PlaceholderTy { universe, bound }) => {
-                let universe_mapped = universe_map(universe);
-                let placeholder_mapped = PlaceholderTy { universe: universe_mapped, bound };
+            CanonicalVarKind::PlaceholderTy(placeholder) => {
+                let universe_mapped = universe_map(placeholder.universe);
+                let placeholder_mapped = PlaceholderTy::new(universe_mapped, placeholder.bound);
                 Ty::new_placeholder(self.interner, placeholder_mapped).into()
             }
 
@@ -120,18 +120,16 @@ impl<'db> InferCtxt<'db> {
                 self.next_region_var_in_universe(universe_map(ui)).into()
             }
 
-            CanonicalVarKind::PlaceholderRegion(PlaceholderRegion { universe, bound }) => {
-                let universe_mapped = universe_map(universe);
-                let placeholder_mapped: crate::next_solver::Placeholder<
-                    crate::next_solver::BoundRegion,
-                > = PlaceholderRegion { universe: universe_mapped, bound };
+            CanonicalVarKind::PlaceholderRegion(placeholder) => {
+                let universe_mapped = universe_map(placeholder.universe);
+                let placeholder_mapped = PlaceholderRegion::new(universe_mapped, placeholder.bound);
                 Region::new_placeholder(self.interner, placeholder_mapped).into()
             }
 
             CanonicalVarKind::Const(ui) => self.next_const_var_in_universe(universe_map(ui)).into(),
-            CanonicalVarKind::PlaceholderConst(PlaceholderConst { universe, bound }) => {
-                let universe_mapped = universe_map(universe);
-                let placeholder_mapped = PlaceholderConst { universe: universe_mapped, bound };
+            CanonicalVarKind::PlaceholderConst(placeholder) => {
+                let universe_mapped = universe_map(placeholder.universe);
+                let placeholder_mapped = PlaceholderConst::new(universe_mapped, placeholder.bound);
                 Const::new_placeholder(self.interner, placeholder_mapped).into()
             }
         }

@@ -96,8 +96,19 @@ impl<'db> Ty<'db> {
         Ty::new(interner, TyKind::Param(ParamTy { id, index }))
     }
 
-    pub fn new_placeholder(interner: DbInterner<'db>, placeholder: PlaceholderTy<'db>>) -> Self {
-        Ty::new(interner, TyKind::Placeholder(placeholder))
+    pub fn new_placeholder(interner: DbInterner<'db>, placeholder: PlaceholderTy) -> Self {
+        let upstream = rustc_type_ir::Placeholder {
+            universe: placeholder.universe,
+            bound: rustc_type_ir::BoundTy {
+                var: placeholder.bound.var,
+                kind: match placeholder.bound.kind {
+                    crate::next_solver::ty::BoundTyKind::Anon => rustc_type_ir::BoundTyKind::Anon,
+                    crate::next_solver::ty::BoundTyKind::Param(id) => rustc_type_ir::BoundTyKind::Param(id),
+                },
+            },
+            _tcx: std::marker::PhantomData,
+        };
+        Ty::new(interner, TyKind::Placeholder(upstream))
     }
 
     pub fn new_infer(interner: DbInterner<'db>, infer: InferTy) -> Self {
@@ -746,7 +757,7 @@ impl<'db> Ty<'db> {
             }
             (TyKind::FnDef(def_id, ..), TyKind::FnDef(def_id2, ..)) => def_id == def_id2,
             (TyKind::Alias(alias), TyKind::Alias(alias2)) => {
-                $1.def_id() == $1.def_id()
+                alias.def_id() == alias2.def_id()
             }
             (TyKind::Foreign(ty_id, ..), TyKind::Foreign(ty_id2, ..)) => ty_id == ty_id2,
             (TyKind::Closure(id1, _), TyKind::Closure(id2, _)) => id1 == id2,
@@ -1354,7 +1365,7 @@ impl<'db> rustc_type_ir::inherent::Tys<DbInterner<'db>> for Tys<'db> {
     }
 }
 
-pub type PlaceholderTy<'db> = Placeholder<DbInterner<'db>, BoundTy<DbInterner<'db>>>;
+pub type PlaceholderTy = Placeholder<BoundTy>;
 
 #[derive(Copy, Clone, PartialEq, Eq, Hash)]
 pub struct ParamTy {
