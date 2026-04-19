@@ -866,15 +866,19 @@ mod wf {
                     // Simple cases that are WF if their type args are WF.
                 }
 
-                TyKind::Alias(
-                    rustc_type_ir::Projection | rustc_type_ir::Opaque | rustc_type_ir::Free,
-                    data,
-                ) => {
-                    let obligations = self.nominal_obligations(data.def_id, data.args);
-                    self.out.extend(obligations);
-                }
-                TyKind::Alias(rustc_type_ir::Inherent, _data) => {
-                    return;
+                TyKind::Alias(alias) => {
+                    match alias.kind {
+                        rustc_type_ir::AliasTyKind::Projection { .. }
+                        | rustc_type_ir::AliasTyKind::Opaque { .. }
+                        | rustc_type_ir::AliasTyKind::Free { .. } => {
+                            let def_id = alias.kind.def_id();
+                            let obligations = self.nominal_obligations(def_id.into(), alias.args);
+                            self.out.extend(obligations);
+                        }
+                        rustc_type_ir::AliasTyKind::Inherent { .. } => {
+                            return;
+                        }
+                    }
                 }
 
                 TyKind::Adt(def, args) => {

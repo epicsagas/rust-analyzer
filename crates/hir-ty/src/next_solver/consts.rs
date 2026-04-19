@@ -72,11 +72,14 @@ impl<'db> Const<'db> {
     }
 
     pub fn new_placeholder(interner: DbInterner<'db>, placeholder: PlaceholderConst) -> Self {
-        Const::new(interner, ConstKind::Placeholder(placeholder))
+        let upstream_bound = rustc_type_ir::BoundConst::new(placeholder.bound.var);
+        let upstream = rustc_type_ir::PlaceholderConst::new(placeholder.universe, upstream_bound);
+        Const::new(interner, ConstKind::Placeholder(upstream))
     }
 
     pub fn new_bound(interner: DbInterner<'db>, index: DebruijnIndex, bound: BoundConst) -> Self {
-        Const::new(interner, ConstKind::Bound(BoundVarIndexKind::Bound(index), bound))
+        let upstream_bound = rustc_type_ir::BoundConst::new(bound.var);
+        Const::new(interner, ConstKind::Bound(BoundVarIndexKind::Bound(index), upstream_bound))
     }
 
     pub fn new_valtree(
@@ -404,12 +407,12 @@ impl<'db> rustc_type_ir::inherent::Const<DbInterner<'db>> for Const<'db> {
     fn new_anon_bound(interner: DbInterner<'db>, debruijn: DebruijnIndex, var: BoundVar) -> Self {
         Const::new(
             interner,
-            ConstKind::Bound(BoundVarIndexKind::Bound(debruijn), BoundConst { var }),
+            ConstKind::Bound(BoundVarIndexKind::Bound(debruijn), rustc_type_ir::BoundConst::new(var)),
         )
     }
 
     fn new_canonical_bound(interner: DbInterner<'db>, var: BoundVar) -> Self {
-        Const::new(interner, ConstKind::Bound(BoundVarIndexKind::Canonical, BoundConst { var }))
+        Const::new(interner, ConstKind::Bound(BoundVarIndexKind::Canonical, rustc_type_ir::BoundConst::new(var)))
     }
 
     fn new_placeholder(

@@ -444,6 +444,12 @@ pub struct Placeholder<T> {
     pub bound: T,
 }
 
+impl<T> Placeholder<T> {
+    pub fn new(universe: UniverseIndex, bound: T) -> Self {
+        Self { universe, bound }
+    }
+}
+
 impl<T: std::fmt::Debug> std::fmt::Debug for Placeholder<T> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> fmt::Result {
         if self.universe == UniverseIndex::ROOT {
@@ -1549,6 +1555,8 @@ impl<'db> Interner for DbInterner<'db> {
             SolverLangItem::CoroutineYield => lang_items.CoroutineYield,
             SolverLangItem::FutureOutput => lang_items.FutureOutput,
             SolverLangItem::Metadata => lang_items.Metadata,
+            SolverLangItem::FieldBase => unimplemented!(),
+            SolverLangItem::FieldType => unimplemented!(),
             SolverLangItem::DynMetadata => {
                 return lang_items.DynMetadata.expect("Lang item required but not found.").into();
             }
@@ -1571,6 +1579,7 @@ impl<'db> Interner for DbInterner<'db> {
             SolverTraitLangItem::Copy => lang_items.Copy,
             SolverTraitLangItem::Coroutine => lang_items.Coroutine,
             SolverTraitLangItem::Destruct => lang_items.Destruct,
+            SolverTraitLangItem::Field => unimplemented!(),
             SolverTraitLangItem::DiscriminantKind => lang_items.DiscriminantKind,
             SolverTraitLangItem::Drop => lang_items.Drop,
             SolverTraitLangItem::Fn => lang_items.Fn,
@@ -1619,7 +1628,8 @@ impl<'db> Interner for DbInterner<'db> {
                 AsyncIterator,
                 BikeshedGuaranteedNoDrop,
                 FusedIterator,
-                AsyncFnOnceOutput, // This is incorrectly marked as `SolverTraitLangItem`, and is not used by the solver.
+                AsyncFnOnceOutput, // This is incorrectly marked, and is not used by the solver.
+                Field,
             }
 
             Sized,
@@ -1663,6 +1673,8 @@ impl<'db> Interner for DbInterner<'db> {
 
                     ignore = {
                         AsyncFnKindUpvars,
+                        FieldBase,
+                        FieldType,
                         DynMetadata,
                     }
 
@@ -1681,6 +1693,8 @@ impl<'db> Interner for DbInterner<'db> {
 
                     ignore = {
                         AsyncFnKindUpvars,
+                        FieldBase,
+                        FieldType,
                         Metadata,
                         CoroutineReturn,
                         CoroutineYield,
@@ -1706,7 +1720,8 @@ impl<'db> Interner for DbInterner<'db> {
                 AsyncIterator,
                 BikeshedGuaranteedNoDrop,
                 FusedIterator,
-                AsyncFnOnceOutput, // This is incorrectly marked as `SolverTraitLangItem`, and is not used by the solver.
+                AsyncFnOnceOutput, // This is incorrectly marked, and is not used by the solver.
+                Field,
             }
 
             Sized,
@@ -1882,7 +1897,7 @@ impl<'db> Interner for DbInterner<'db> {
             //
             // Impls which apply to an alias after normalization are handled by
             // `assemble_candidates_after_normalizing_self_ty`.
-            TyKind::Alias(_, _) | TyKind::Placeholder(..) | TyKind::Error(_) => (),
+            TyKind::Alias(_) | TyKind::Placeholder(..) | TyKind::Error(_) => (),
 
             // FIXME: These should ideally not exist as a self type. It would be nice for
             // the builtin auto trait impls of coroutines to instead directly recurse

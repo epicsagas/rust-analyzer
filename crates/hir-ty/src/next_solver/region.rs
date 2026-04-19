@@ -58,7 +58,16 @@ impl<'db> Region<'db> {
     }
 
     pub fn new_placeholder(interner: DbInterner<'db>, placeholder: PlaceholderRegion) -> Self {
-        Region::new(interner, RegionKind::RePlaceholder(placeholder))
+        let upstream_bound = rustc_type_ir::BoundRegion {
+            var: placeholder.bound.var,
+            kind: match placeholder.bound.kind {
+                crate::next_solver::region::BoundRegionKind::Anon => rustc_type_ir::BoundRegionKind::Anon,
+                crate::next_solver::region::BoundRegionKind::Named(def_id) => rustc_type_ir::BoundRegionKind::Named(def_id),
+                crate::next_solver::region::BoundRegionKind::ClosureEnv => rustc_type_ir::BoundRegionKind::Anon,
+            },
+        };
+        let upstream = rustc_type_ir::PlaceholderRegion::new(placeholder.universe, upstream_bound);
+        Region::new(interner, RegionKind::RePlaceholder(upstream))
     }
 
     pub fn new_var(interner: DbInterner<'db>, v: RegionVid) -> Region<'db> {
@@ -74,7 +83,15 @@ impl<'db> Region<'db> {
         index: DebruijnIndex,
         bound: BoundRegion,
     ) -> Region<'db> {
-        Region::new(interner, RegionKind::ReBound(BoundVarIndexKind::Bound(index), bound))
+        let upstream = rustc_type_ir::BoundRegion {
+            var: bound.var,
+            kind: match bound.kind {
+                BoundRegionKind::Anon => rustc_type_ir::BoundRegionKind::Anon,
+                BoundRegionKind::Named(id) => rustc_type_ir::BoundRegionKind::Named(id),
+                BoundRegionKind::ClosureEnv => rustc_type_ir::BoundRegionKind::ClosureEnv,
+            },
+        };
+        Region::new(interner, RegionKind::ReBound(BoundVarIndexKind::Bound(index), upstream))
     }
 
     pub fn is_placeholder(&self) -> bool {

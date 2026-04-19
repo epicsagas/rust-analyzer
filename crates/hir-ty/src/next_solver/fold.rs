@@ -8,8 +8,35 @@ use rustc_type_ir::{
 use crate::next_solver::{BoundConst, FxIndexMap};
 
 use super::{
-    Binder, BoundRegion, BoundTy, Const, ConstKind, DbInterner, Predicate, Region, Ty, TyKind,
+    Binder, BoundRegion, BoundRegionKind, BoundTy, BoundTyKind, Const, ConstKind, DbInterner,
+    Predicate, Region, Ty, TyKind,
 };
+
+fn upstream_bound_ty_to_local(bt: rustc_type_ir::BoundTy<DbInterner<'_>>) -> BoundTy {
+    BoundTy {
+        var: bt.var,
+        kind: match bt.kind {
+            rustc_type_ir::BoundTyKind::Anon => BoundTyKind::Anon,
+            rustc_type_ir::BoundTyKind::Param(id) => BoundTyKind::Param(id),
+        },
+    }
+}
+
+fn upstream_bound_region_to_local(br: rustc_type_ir::BoundRegion<DbInterner<'_>>) -> BoundRegion {
+    BoundRegion {
+        var: br.var,
+        kind: match br.kind {
+            rustc_type_ir::BoundRegionKind::Anon => BoundRegionKind::Anon,
+            rustc_type_ir::BoundRegionKind::Named(id) => BoundRegionKind::Named(id),
+            rustc_type_ir::BoundRegionKind::ClosureEnv => BoundRegionKind::ClosureEnv,
+            _ => BoundRegionKind::Anon,
+        },
+    }
+}
+
+fn upstream_bound_const_to_local(bv: rustc_type_ir::BoundConst<DbInterner<'_>>) -> BoundConst {
+    BoundConst { var: bv.var }
+}
 
 /// A delegate used when instantiating bound vars.
 ///
@@ -17,28 +44,28 @@ use super::{
 /// gets mapped to the same result. `BoundVarReplacer` caches by using
 /// a `DelayedMap` which does not cache the first few types it encounters.
 pub trait BoundVarReplacerDelegate<'db> {
-    fn replace_region(&mut self, br: BoundRegion<DbInterner<'db>>) -> Region<'db>;
-    fn replace_ty(&mut self, bt: BoundTy<DbInterner<'db>>) -> Ty<'db>;
-    fn replace_const(&mut self, bv: BoundConst<DbInterner<'db>>) -> Const<'db>;
+    fn replace_region(&mut self, br: BoundRegion) -> Region<'db>;
+    fn replace_ty(&mut self, bt: BoundTy) -> Ty<'db>;
+    fn replace_const(&mut self, bv: BoundConst) -> Const<'db>;
 }
 
 /// A simple delegate taking 3 mutable functions. The used functions must
 /// always return the same result for each bound variable, no matter how
 /// frequently they are called.
 pub struct FnMutDelegate<'db, 'a> {
-    pub regions: &'a mut (dyn FnMut(BoundRegion<DbInterner<'db>>) -> Region<'db> + 'a),
-    pub types: &'a mut (dyn FnMut(BoundTy<DbInterner<'db>>) -> Ty<'db> + 'a),
-    pub consts: &'a mut (dyn FnMut(BoundConst<DbInterner<'db>>) -> Const<'db> + 'a),
+    pub regions: &'a mut (dyn FnMut(BoundRegion) -> Region<'db> + 'a),
+    pub types: &'a mut (dyn FnMut(BoundTy) -> Ty<'db> + 'a),
+    pub consts: &'a mut (dyn FnMut(BoundConst) -> Const<'db> + 'a),
 }
 
 impl<'db, 'a> BoundVarReplacerDelegate<'db> for FnMutDelegate<'db, 'a> {
-    fn replace_region(&mut self, br: BoundRegion<DbInterner<'db>>) -> Region<'db> {
+    fn replace_region(&mut self, br: BoundRegion) -> Region<'db> {
         (self.regions)(br)
     }
-    fn replace_ty(&mut self, bt: BoundTy<DbInterner<'db>>) -> Ty<'db> {
+    fn replace_ty(&mut self, bt: BoundTy) -> Ty<'db> {
         (self.types)(bt)
     }
-    fn replace_const(&mut self, bv: BoundConst<DbInterner<'db>>) -> Const<'db> {
+    fn replace_const(&mut self, bv: BoundConst) -> Const<'db> {
         (self.consts)(bv)
     }
 }
@@ -82,7 +109,7 @@ where
             TyKind::Bound(BoundVarIndexKind::Bound(debruijn), bound_ty)
                 if debruijn == self.current_index =>
             {
-                let ty = self.delegate.replace_ty(bound_ty);
+                let ty = self.delegate.replace_ty(upstream_bound_ty_to_local(bound_ty));
                 debug_assert!(!ty.has_vars_bound_above(DebruijnIndex::ZERO));
                 rustc_type_ir::shift_vars(self.interner, ty, self.current_index.as_u32())
             }
@@ -101,7 +128,7 @@ where
             RegionKind::ReBound(BoundVarIndexKind::Bound(debruijn), br)
                 if debruijn == self.current_index =>
             {
-                let region = self.delegate.replace_region(br);
+                let region = self.delegate.replace_region(upstream_bound_region_to_local(br));
                 if let RegionKind::ReBound(BoundVarIndexKind::Bound(debruijn1), br) = region.kind()
                 {
                     // If the callback returns a bound region,
@@ -123,7 +150,7 @@ where
             ConstKind::Bound(BoundVarIndexKind::Bound(debruijn), bound_const)
                 if debruijn == self.current_index =>
             {
-                let ct = self.delegate.replace_const(bound_const);
+                let ct = self.delegate.replace_const(upstream_bound_const_to_local(bound_const));
                 debug_assert!(!ct.has_vars_bound_above(DebruijnIndex::ZERO));
                 rustc_type_ir::shift_vars(self.interner, ct, self.current_index.as_u32())
             }

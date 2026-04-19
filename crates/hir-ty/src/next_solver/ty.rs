@@ -97,17 +97,14 @@ impl<'db> Ty<'db> {
     }
 
     pub fn new_placeholder(interner: DbInterner<'db>, placeholder: PlaceholderTy) -> Self {
-        let upstream = rustc_type_ir::Placeholder {
-            universe: placeholder.universe,
-            bound: rustc_type_ir::BoundTy {
-                var: placeholder.bound.var,
-                kind: match placeholder.bound.kind {
-                    crate::next_solver::ty::BoundTyKind::Anon => rustc_type_ir::BoundTyKind::Anon,
-                    crate::next_solver::ty::BoundTyKind::Param(id) => rustc_type_ir::BoundTyKind::Param(id),
-                },
+        let upstream_bound = rustc_type_ir::BoundTy {
+            var: placeholder.bound.var,
+            kind: match placeholder.bound.kind {
+                crate::next_solver::ty::BoundTyKind::Anon => rustc_type_ir::BoundTyKind::Anon,
+                crate::next_solver::ty::BoundTyKind::Param(id) => rustc_type_ir::BoundTyKind::Param(id),
             },
-            _tcx: std::marker::PhantomData,
         };
+        let upstream = rustc_type_ir::Placeholder::new(placeholder.universe, upstream_bound);
         Ty::new(interner, TyKind::Placeholder(upstream))
     }
 
