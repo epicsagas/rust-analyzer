@@ -1636,7 +1636,7 @@ fn coerce<'db>(
                         Ty::new_bound(
                             self.interner,
                             self.debruijn,
-                            BoundTy { kind: BoundTyKind::Anon, var: BoundVar::from_usize(i) },
+                            rustc_type_ir::BoundTy { kind: rustc_type_ir::BoundTyKind::Anon, var: BoundVar::from_usize(i) },
                         )
                     },
                 )

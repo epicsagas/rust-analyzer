@@ -498,7 +498,7 @@ impl<'cx, 'db> Canonicalizer<'cx, 'db> {
     {
         let base = Canonical {
             max_universe: UniverseIndex::ROOT,
-            variables: CanonicalVars::empty(tcx),
+            var_kinds: CanonicalVars::empty(tcx),
             value: (),
         };
         Canonicalizer::canonicalize_with_base(
@@ -539,7 +539,7 @@ impl<'cx, 'db> Canonicalizer<'cx, 'db> {
             tcx,
             canonicalize_mode: canonicalize_region_mode,
             needs_canonical_flags,
-            variables: SmallVec::from_slice(base.variables.as_slice()),
+            variables: SmallVec::from_slice(base.var_kinds.as_slice()),
             query_state,
             indices: FxHashMap::default(),
             sub_root_lookup_table: Default::default(),
@@ -570,7 +570,7 @@ impl<'cx, 'db> Canonicalizer<'cx, 'db> {
             .max()
             .unwrap_or(UniverseIndex::ROOT);
 
-        Canonical { max_universe, variables: canonical_variables, value: (base.value, out_value) }
+        Canonical { max_universe, var_kinds: canonical_variables, value: (base.value, out_value) }
     }
 
     /// Creates a canonical variable replacing `kind` from the input,
@@ -670,22 +670,13 @@ impl<'cx, 'db> Canonicalizer<'cx, 'db> {
                 CanonicalVarKind::Region(u) => CanonicalVarKind::Region(reverse_universe_map[&u]),
                 CanonicalVarKind::Const(u) => CanonicalVarKind::Const(reverse_universe_map[&u]),
                 CanonicalVarKind::PlaceholderTy(placeholder) => {
-                    CanonicalVarKind::PlaceholderTy(Placeholder {
-                        universe: reverse_universe_map[&placeholder.universe],
-                        ..placeholder
-                    })
+                    CanonicalVarKind::PlaceholderTy(placeholder.with_updated_universe(reverse_universe_map[&placeholder.universe]))
                 }
                 CanonicalVarKind::PlaceholderRegion(placeholder) => {
-                    CanonicalVarKind::PlaceholderRegion(Placeholder {
-                        universe: reverse_universe_map[&placeholder.universe],
-                        ..placeholder
-                    })
+                    CanonicalVarKind::PlaceholderRegion(placeholder.with_updated_universe(reverse_universe_map[&placeholder.universe]))
                 }
                 CanonicalVarKind::PlaceholderConst(placeholder) => {
-                    CanonicalVarKind::PlaceholderConst(Placeholder {
-                        universe: reverse_universe_map[&placeholder.universe],
-                        ..placeholder
-                    })
+                    CanonicalVarKind::PlaceholderConst(placeholder.with_updated_universe(reverse_universe_map[&placeholder.universe]))
                 }
             })
             .collect()

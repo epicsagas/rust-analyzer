@@ -136,7 +136,7 @@ where
                     // debruijn index. Then we adjust it to the
                     // correct depth.
                     assert_eq!(debruijn1, DebruijnIndex::ZERO);
-                    Region::new_bound(self.interner, debruijn, br)
+                    Region::new_bound(self.interner, debruijn, upstream_bound_region_to_local(br))
                 } else {
                     region
                 }

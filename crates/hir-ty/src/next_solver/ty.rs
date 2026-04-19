@@ -1068,7 +1068,7 @@ impl<'db> rustc_type_ir::inherent::Ty<DbInterner<'db>> for Ty<'db> {
             interner,
             TyKind::Bound(
                 BoundVarIndexKind::Bound(debruijn),
-                BoundTy { var, kind: BoundTyKind::Anon },
+                rustc_type_ir::BoundTy { var, kind: rustc_type_ir::BoundTyKind::Anon },
             ),
         )
     }
@@ -1076,7 +1076,7 @@ impl<'db> rustc_type_ir::inherent::Ty<DbInterner<'db>> for Ty<'db> {
     fn new_canonical_bound(interner: DbInterner<'db>, var: BoundVar) -> Self {
         Ty::new(
             interner,
-            TyKind::Bound(BoundVarIndexKind::Canonical, BoundTy { var, kind: BoundTyKind::Anon }),
+            TyKind::Bound(BoundVarIndexKind::Canonical, rustc_type_ir::BoundTy { var, kind: rustc_type_ir::BoundTyKind::Anon }),
         )
     }
 

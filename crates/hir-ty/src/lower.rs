@@ -1014,7 +1014,7 @@ impl<'db, 'a> TyLoweringContext<'db, 'a> {
             let region = match region {
                 Some(it) => match it.kind() {
                     rustc_type_ir::RegionKind::ReBound(BoundVarIndexKind::Bound(db), var) => {
-                        Region::new_bound(
+                        Region::new_from_upstream_bound(
                             self.interner,
                             db.shifted_out_to_binder(DebruijnIndex::from_u32(2)),
                             var,

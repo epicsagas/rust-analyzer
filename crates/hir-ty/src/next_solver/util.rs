@@ -14,6 +14,8 @@ use rustc_type_ir::{
 };
 
 use crate::{
+
+type UpstreamPlaceholderTy<'db> = rustc_type_ir::Placeholder<DbInterner<'db>, rustc_type_ir::BoundTy<DbInterner<'db>>>;
     next_solver::{
         BoundConst, FxIndexMap, ParamEnv, Placeholder, PlaceholderConst, PlaceholderRegion,
         PolyTraitRef,
@@ -497,9 +499,9 @@ impl<'db> TypeVisitor<DbInterner<'db>> for ContainsTypeErrors {
 /// The inverse of [`BoundVarReplacer`]: replaces placeholders with the bound vars from which they came.
 pub struct PlaceholderReplacer<'a, 'db> {
     infcx: &'a InferCtxt<'db>,
-    mapped_regions: FxIndexMap<PlaceholderRegion, BoundRegion>,
-    mapped_types: FxIndexMap<Placeholder<BoundTy>, BoundTy>,
-    mapped_consts: FxIndexMap<PlaceholderConst, BoundConst>,
+    mapped_regions: FxIndexMap<PlaceholderRegion, rustc_type_ir::BoundRegion<DbInterner<'db>>>,
+    mapped_types: FxIndexMap<UpstreamPlaceholderTy<'db>, rustc_type_ir::BoundTy<DbInterner<'db>>>,
+    mapped_consts: FxIndexMap<PlaceholderConst, rustc_type_ir::BoundConst<DbInterner<'db>>>,
     universe_indices: &'a [Option<UniverseIndex>],
     current_index: DebruijnIndex,
 }
@@ -507,9 +509,9 @@ pub struct PlaceholderReplacer<'a, 'db> {
 impl<'a, 'db> PlaceholderReplacer<'a, 'db> {
     pub fn replace_placeholders<T: TypeFoldable<DbInterner<'db>>>(
         infcx: &'a InferCtxt<'db>,
-        mapped_regions: FxIndexMap<PlaceholderRegion, BoundRegion>,
-        mapped_types: FxIndexMap<Placeholder<BoundTy>, BoundTy>,
-        mapped_consts: FxIndexMap<PlaceholderConst, BoundConst>,
+        mapped_regions: FxIndexMap<PlaceholderRegion, rustc_type_ir::BoundRegion<DbInterner<'db>>>,
+        mapped_types: FxIndexMap<UpstreamPlaceholderTy<'db>, rustc_type_ir::BoundTy<DbInterner<'db>>>,
+        mapped_consts: FxIndexMap<PlaceholderConst, rustc_type_ir::BoundConst<DbInterner<'db>>>,
         universe_indices: &'a [Option<UniverseIndex>],
         value: T,
     ) -> T {
@@ -567,7 +569,7 @@ impl<'db> TypeFolder<DbInterner<'db>> for PlaceholderReplacer<'_, 'db> {
                         let db = DebruijnIndex::from_usize(
                             self.universe_indices.len() - index + self.current_index.as_usize() - 1,
                         );
-                        Region::new_bound(self.cx(), db, *replace_var)
+                        Region::new_from_upstream_bound(self.cx(), db, *replace_var)
                     }
                     None => r1,
                 }
@@ -626,7 +628,7 @@ impl<'db> TypeFolder<DbInterner<'db>> for PlaceholderReplacer<'_, 'db> {
                     let db = DebruijnIndex::from_usize(
                         self.universe_indices.len() - index + self.current_index.as_usize() - 1,
                     );
-                    Const::new_bound(self.infcx.interner, db, *replace_var)
+                    Const::new_bound_from_var(self.infcx.interner, db, replace_var.var)
                 }
                 None => {
                     if ct.has_infer() {

@@ -22,9 +22,11 @@
 //! [c]: https://rust-lang.github.io/chalk/book/canonical_queries/canonicalization.html
 
 use crate::next_solver::{
-    ArgOutlivesPredicate, Canonical, CanonicalVarValues, Const, DbInterner, GenericArg,
-    OpaqueTypeKey, PlaceholderConst, PlaceholderRegion, PlaceholderTy, Region, Ty, TyKind,
-    infer::InferCtxt,
+    ArgOutlivesPredicate, BoundConst as LocalBoundConst, BoundRegion as LocalBoundRegion,
+    BoundRegionKind as LocalBoundRegionKind, BoundTy as LocalBoundTy,
+    BoundTyKind as LocalBoundTyKind, Canonical, CanonicalVarValues, Const, DbInterner,
+    GenericArg, OpaqueTypeKey, PlaceholderConst, PlaceholderRegion, PlaceholderTy, Region, Ty,
+    TyKind, infer::InferCtxt,
 };
 use instantiate::CanonicalExt;
 use macros::{TypeFoldable, TypeVisitable};
@@ -112,7 +114,8 @@ impl<'db> InferCtxt<'db> {
 
             CanonicalVarKind::PlaceholderTy(placeholder) => {
                 let universe_mapped = universe_map(placeholder.universe);
-                let placeholder_mapped = PlaceholderTy::new(universe_mapped, placeholder.bound);
+                let local_bound = LocalBoundTy { var: placeholder.bound.var, kind: match placeholder.bound.kind { rustc_type_ir::BoundTyKind::Anon => LocalBoundTyKind::Anon, rustc_type_ir::BoundTyKind::Param(id) => LocalBoundTyKind::Param(id) } };
+                let placeholder_mapped = PlaceholderTy::new(universe_mapped, local_bound);
                 Ty::new_placeholder(self.interner, placeholder_mapped).into()
             }
 
@@ -122,14 +125,16 @@ impl<'db> InferCtxt<'db> {
 
             CanonicalVarKind::PlaceholderRegion(placeholder) => {
                 let universe_mapped = universe_map(placeholder.universe);
-                let placeholder_mapped = PlaceholderRegion::new(universe_mapped, placeholder.bound);
+                let local_bound = LocalBoundRegion { var: placeholder.bound.var, kind: match placeholder.bound.kind { rustc_type_ir::BoundRegionKind::Anon => LocalBoundRegionKind::Anon, rustc_type_ir::BoundRegionKind::Named(id) => LocalBoundRegionKind::Named(id), _ => LocalBoundRegionKind::Anon } };
+                let placeholder_mapped = PlaceholderRegion::new(universe_mapped, local_bound);
                 Region::new_placeholder(self.interner, placeholder_mapped).into()
             }
 
             CanonicalVarKind::Const(ui) => self.next_const_var_in_universe(universe_map(ui)).into(),
             CanonicalVarKind::PlaceholderConst(placeholder) => {
                 let universe_mapped = universe_map(placeholder.universe);
-                let placeholder_mapped = PlaceholderConst::new(universe_mapped, placeholder.bound);
+                let local_bound = LocalBoundConst { var: placeholder.bound.var };
+                let placeholder_mapped = PlaceholderConst::new(universe_mapped, local_bound);
                 Const::new_placeholder(self.interner, placeholder_mapped).into()
             }
         }

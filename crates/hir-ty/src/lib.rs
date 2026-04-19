@@ -407,7 +407,7 @@ where
                     Ok(Ty::new_bound(
                         self.interner,
                         self.binder,
-                        BoundTy { var, kind: BoundTyKind::Anon },
+                        rustc_type_ir::BoundTy { var, kind: rustc_type_ir::BoundTyKind::Anon },
                     ))
                 }
                 TyKind::Infer(_) => error(),
@@ -455,10 +455,10 @@ where
                 RegionKind::ReError(_) => {
                     let var = rustc_type_ir::BoundVar::from_usize(self.vars.len());
                     self.vars.push(CanonicalVarKind::Region(rustc_type_ir::UniverseIndex::ZERO));
-                    Ok(Region::new_bound(
+                    Ok(Region::new_from_upstream_bound(
                         self.interner,
                         self.binder,
-                        BoundRegion { var, kind: BoundRegionKind::Anon },
+                        rustc_type_ir::BoundRegion { var, kind: rustc_type_ir::BoundRegionKind::Anon },
                     ))
                 }
                 RegionKind::ReVar(_) => error(),
@@ -479,7 +479,7 @@ where
     Canonical {
         value,
         max_universe: rustc_type_ir::UniverseIndex::ZERO,
-        variables: CanonicalVars::new_from_slice(&error_replacer.vars),
+        var_kinds: CanonicalVars::new_from_slice(&error_replacer.vars),
     }
 }
 

@@ -1293,7 +1293,7 @@ impl<'db> SourceAnalyzer<'db> {
                             PathResolution::Def(ModuleDef::Adt(adt_id.into())),
                         )
                     }
-                    TyKind::Alias(AliasTyKind::Projection, alias) => {
+                    TyKind::Alias(alias) => {
                         let assoc_id = alias.def_id.expect_type_alias();
                         (
                             GenericSubstitution::new(assoc_id.into(), alias.args, env),

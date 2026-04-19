@@ -2104,7 +2104,13 @@ impl<'db> Interner for DbInterner<'db> {
                 let var = BoundVar::from_usize(index);
                 let kind =
                     (*entry.or_insert_with(|| BoundVarKind::Ty(BoundTyKind::Anon))).expect_ty();
-                Ty::new_bound(self.interner, DebruijnIndex::ZERO, BoundTy { var, kind })
+                Ty::new_bound(self.interner, DebruijnIndex::ZERO, rustc_type_ir::BoundTy {
+                        var,
+                        kind: match kind {
+                            crate::next_solver::ty::BoundTyKind::Anon => rustc_type_ir::BoundTyKind::Anon,
+                            crate::next_solver::ty::BoundTyKind::Param(id) => rustc_type_ir::BoundTyKind::Param(id),
+                        },
+                    })
             }
             fn replace_const(&mut self, bv: BoundConst) -> Const<'db> {
                 let entry = self.map.entry(bv.var);
@@ -2332,7 +2338,10 @@ impl<'db> DbInterner<'db> {
                     Ty::new_bound(
                         self,
                         DebruijnIndex::ZERO,
-                        BoundTy { var: shift_bv(t.var), kind: t.kind },
+                        rustc_type_ir::BoundTy { var: shift_bv(t.var), kind: match t.kind {
+                            crate::next_solver::ty::BoundTyKind::Anon => rustc_type_ir::BoundTyKind::Anon,
+                            crate::next_solver::ty::BoundTyKind::Param(id) => rustc_type_ir::BoundTyKind::Param(id),
+                        } },
                     )
                 },
                 consts: &mut |c| {

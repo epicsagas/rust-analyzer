@@ -6353,7 +6353,7 @@ impl<'db> Type<'db> {
     }
 
     pub fn as_associated_type_parent_trait(&self, db: &'db dyn HirDatabase) -> Option<Trait> {
-        let TyKind::Alias(AliasTyKind::Projection, alias) = self.ty.kind() else { return None };
+        let TyKind::Alias(alias) = self.ty.kind() else { return None };
         match alias.def_id.expect_type_alias().loc(db).container {
             ItemContainerId::TraitId(id) => Some(Trait { id }),
             _ => None,

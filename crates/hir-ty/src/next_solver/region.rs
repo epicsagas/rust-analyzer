@@ -91,7 +91,15 @@ impl<'db> Region<'db> {
                 BoundRegionKind::ClosureEnv => rustc_type_ir::BoundRegionKind::ClosureEnv,
             },
         };
-        Region::new(interner, RegionKind::ReBound(BoundVarIndexKind::Bound(index), upstream))
+        Region::new_from_upstream_bound(interner, index, upstream)
+    }
+
+    pub fn new_from_upstream_bound(
+        interner: DbInterner<'db>,
+        index: DebruijnIndex,
+        bound: rustc_type_ir::BoundRegion<DbInterner<'db>>,
+    ) -> Region<'db> {
+        Region::new(interner, RegionKind::ReBound(BoundVarIndexKind::Bound(index), bound))
     }
 
     pub fn is_placeholder(&self) -> bool {
@@ -345,7 +353,7 @@ impl<'db> rustc_type_ir::inherent::Region<DbInterner<'db>> for Region<'db> {
             interner,
             RegionKind::ReBound(
                 BoundVarIndexKind::Bound(debruijn),
-                BoundRegion { var, kind: BoundRegionKind::Anon },
+                rustc_type_ir::BoundRegion { var, kind: rustc_type_ir::BoundRegionKind::Anon },
             ),
         )
     }
@@ -355,7 +363,7 @@ impl<'db> rustc_type_ir::inherent::Region<DbInterner<'db>> for Region<'db> {
             interner,
             RegionKind::ReBound(
                 BoundVarIndexKind::Canonical,
-                BoundRegion { var, kind: BoundRegionKind::Anon },
+                rustc_type_ir::BoundRegion { var, kind: rustc_type_ir::BoundRegionKind::Anon },
             ),
         )
     }

@@ -2340,7 +2340,7 @@ impl<'db> Evaluator<'db> {
                     }
                     AdtId::UnionId(_) => (),
                 },
-                TyKind::Alias(AliasTyKind::Projection, _) => {
+                TyKind::Alias(_) => {
                     let mut ocx = ObligationCtxt::new(&this.infcx);
                     let ty = ocx
                         .structurally_normalize_ty(
@@ -2483,7 +2483,7 @@ impl<'db> Evaluator<'db> {
             | TyKind::Error(_)
             | TyKind::Placeholder(_)
             | TyKind::Dynamic(_, _)
-            | TyKind::Alias(_, _)
+            | TyKind::Alias(_)
             | TyKind::Bound(_, _)
             | TyKind::Infer(_)
             | TyKind::Pat(_, _)

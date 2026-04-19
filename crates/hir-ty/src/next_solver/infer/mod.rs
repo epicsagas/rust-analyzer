@@ -366,7 +366,7 @@ impl<'db> InferCtxtBuilder<'db> {
     where
         T: TypeFoldable<DbInterner<'db>>,
     {
-        let infcx = self.build(input.typing_mode);
+        let infcx = self.build(input.typing_mode.0);
         let (value, args) = infcx.instantiate_canonical(&input.canonical);
         (infcx, value, args)
     }

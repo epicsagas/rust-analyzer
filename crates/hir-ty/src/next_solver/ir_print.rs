@@ -12,7 +12,7 @@ impl<'db> IrPrint<ty::AliasTy<Self>> for DbInterner<'db> {
     }
 
     fn print_debug(t: &ty::AliasTy<Self>, fmt: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        crate::with_attached_db(|db| match t.def_id {
+        crate::with_attached_db(|db| match $1.def_id() {
             SolverDefId::TypeAliasId(id) => fmt.write_str(&format!(
                 "AliasTy({:?}[{:?}])",
                 TypeAliasSignature::of(db, id).name.as_str(),
@@ -32,7 +32,7 @@ impl<'db> IrPrint<ty::AliasTerm<Self>> for DbInterner<'db> {
     }
 
     fn print_debug(t: &ty::AliasTerm<Self>, fmt: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        crate::with_attached_db(|db| match t.def_id {
+        crate::with_attached_db(|db| match $1.def_id() {
             SolverDefId::TypeAliasId(id) => fmt.write_str(&format!(
                 "AliasTerm({:?}[{:?}])",
                 TypeAliasSignature::of(db, id).name.as_str(),
@@ -52,7 +52,7 @@ impl<'db> IrPrint<ty::TraitRef<Self>> for DbInterner<'db> {
 
     fn print_debug(t: &ty::TraitRef<Self>, fmt: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         crate::with_attached_db(|db| {
-            let trait_ = t.def_id.0;
+            let trait_ = $1.def_id().0;
             let self_ty = &t.args.as_slice()[0];
             let trait_args = &t.args.as_slice()[1..];
             if trait_args.is_empty() {
@@ -119,7 +119,7 @@ impl<'db> IrPrint<ty::ExistentialTraitRef<Self>> for DbInterner<'db> {
         fmt: &mut std::fmt::Formatter<'_>,
     ) -> std::fmt::Result {
         crate::with_attached_db(|db| {
-            let trait_ = t.def_id.0;
+            let trait_ = $1.def_id().0;
             fmt.write_str(&format!(
                 "ExistentialTraitRef({:?}[{:?}])",
                 TraitSignature::of(db, trait_).name.as_str(),
@@ -141,7 +141,7 @@ impl<'db> IrPrint<ty::ExistentialProjection<Self>> for DbInterner<'db> {
         fmt: &mut std::fmt::Formatter<'_>,
     ) -> std::fmt::Result {
         crate::with_attached_db(|db| {
-            let id = match t.def_id {
+            let id = match $1.def_id() {
                 SolverDefId::TypeAliasId(id) => id,
                 _ => panic!("Expected trait."),
             };
@@ -167,7 +167,7 @@ impl<'db> IrPrint<ty::ProjectionPredicate<Self>> for DbInterner<'db> {
         fmt: &mut std::fmt::Formatter<'_>,
     ) -> std::fmt::Result {
         crate::with_attached_db(|db| {
-            let id = match t.projection_term.def_id {
+            let id = match t.$1.def_id() {
                 SolverDefId::TypeAliasId(id) => id,
                 _ => panic!("Expected trait."),
             };

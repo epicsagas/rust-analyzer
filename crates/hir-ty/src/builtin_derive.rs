@@ -342,7 +342,7 @@ fn extend_assoc_type_bounds<'db>(
         type Result = ();
 
         fn visit_ty(&mut self, t: Ty<'db>) -> Self::Result {
-            if let TyKind::Alias(AliasTyKind::Projection, _) = t.kind() {
+            if let TyKind::Alias(_) = t.kind() {
                 self.assoc_type_bounds.push(
                     TraitRef::new_from_args(
                         self.interner,

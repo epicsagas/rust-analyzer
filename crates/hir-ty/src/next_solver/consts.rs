@@ -82,6 +82,11 @@ impl<'db> Const<'db> {
         Const::new(interner, ConstKind::Bound(BoundVarIndexKind::Bound(index), upstream_bound))
     }
 
+    pub fn new_bound_from_var(interner: DbInterner<'db>, index: DebruijnIndex, var: BoundVar) -> Self {
+        let upstream_bound = rustc_type_ir::BoundConst::new(var);
+        Const::new(interner, ConstKind::Bound(BoundVarIndexKind::Bound(index), upstream_bound))
+    }
+
     pub fn new_valtree(
         interner: DbInterner<'db>,
         ty: Ty<'db>,
