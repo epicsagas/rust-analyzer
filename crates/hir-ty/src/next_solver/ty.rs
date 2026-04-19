@@ -17,8 +17,8 @@ use rustc_type_ir::{
     IntVid, Interner, TyVid, TypeFoldable, TypeSuperFoldable, TypeSuperVisitable, TypeVisitable,
     TypeVisitableExt, TypeVisitor, UintTy, Upcast, WithCachedTypeInfo,
     inherent::{
-        AdtDef as _, BoundExistentialPredicates, BoundVarLike, Const as _, GenericArgs as _,
-        IntoKind, ParamLike, PlaceholderLike, Safety as _, SliceLike, Ty as _,
+        AdtDef as _, BoundExistentialPredicates,
+        IntoKind, ParamLike, Safety as _, SliceLike, Ty as _,
     },
     relate::Relate,
     solve::SizedTraitKind,
@@ -176,7 +176,7 @@ impl<'db> Ty<'db> {
         def_id: SolverDefId,
         args: GenericArgs<'db>,
     ) -> Self {
-        Ty::new_alias(interner, AliasTyKind::Opaque, AliasTy::new_from_args(interner, def_id, args))
+        Ty::new_alias(interner, AliasTy::new_from_args(interner, rustc_type_ir::AliasTyKind::Opaque { def_id }, args))
     }
 
     /// Returns the `Size` for primitive types (bool, uint, int, char, float).
@@ -680,14 +680,17 @@ impl<'db> Ty<'db> {
         let interner = DbInterner::new_no_crate(db);
 
         match self.kind() {
-            TyKind::Alias(AliasTyKind::Opaque, opaque_ty) => Some(
-                opaque_ty
+            TyKind::Alias(alias_ty) => match alias_ty.kind {
+                rustc_type_ir::AliasTyKind::Opaque { .. } => Some(
+                alias_ty
                     .def_id
                     .expect_opaque_ty()
                     .predicates(db)
-                    .iter_instantiated_copied(interner, opaque_ty.args.as_slice())
+                    .iter_instantiated_copied(interner, alias_ty.args.as_slice())
                     .collect(),
             ),
+                _ => None,
+            },
             TyKind::Param(param) => {
                 // FIXME: We shouldn't use `param.id` here.
                 let generic_params = GenericParams::of(db, param.id.parent());
@@ -742,7 +745,7 @@ impl<'db> Ty<'db> {
                 true
             }
             (TyKind::FnDef(def_id, ..), TyKind::FnDef(def_id2, ..)) => def_id == def_id2,
-            (TyKind::Alias(_, alias, ..), TyKind::Alias(_, alias2)) => {
+            (TyKind::Alias(alias), TyKind::Alias(alias2)) => {
                 alias.def_id == alias2.def_id
             }
             (TyKind::Foreign(ty_id, ..), TyKind::Foreign(ty_id2, ..)) => ty_id == ty_id2,
@@ -857,7 +860,7 @@ impl<'db> TypeSuperVisitable<DbInterner<'db>> for Ty<'db> {
             TyKind::CoroutineWitness(_did, ref args) => args.visit_with(visitor),
             TyKind::Closure(_did, ref args) => args.visit_with(visitor),
             TyKind::CoroutineClosure(_did, ref args) => args.visit_with(visitor),
-            TyKind::Alias(_, ref data) => data.visit_with(visitor),
+            TyKind::Alias(ref data) => data.visit_with(visitor),
 
             TyKind::Pat(ty, pat) => {
                 try_visit!(ty.visit_with(visitor));
@@ -1044,11 +1047,11 @@ impl<'db> rustc_type_ir::inherent::Ty<DbInterner<'db>> for Ty<'db> {
         Ty::new(interner, TyKind::Param(param))
     }
 
-    fn new_placeholder(interner: DbInterner<'db>, param: PlaceholderTy) -> Self {
+    fn new_placeholder(interner: DbInterner<'db>, param: rustc_type_ir::Placeholder<DbInterner<'db>, rustc_type_ir::BoundTy<DbInterner<'db>>>) -> Self {
         Ty::new(interner, TyKind::Placeholder(param))
     }
 
-    fn new_bound(interner: DbInterner<'db>, debruijn: DebruijnIndex, var: BoundTy) -> Self {
+    fn new_bound(interner: DbInterner<'db>, debruijn: DebruijnIndex, var: rustc_type_ir::BoundTy<DbInterner<'db>>) -> Self {
         Ty::new(interner, TyKind::Bound(BoundVarIndexKind::Bound(debruijn), var))
     }
 
@@ -1069,8 +1072,8 @@ impl<'db> rustc_type_ir::inherent::Ty<DbInterner<'db>> for Ty<'db> {
         )
     }
 
-    fn new_alias(interner: DbInterner<'db>, kind: AliasTyKind, alias_ty: AliasTy<'db>) -> Self {
-        Ty::new(interner, TyKind::Alias(kind, alias_ty))
+    fn new_alias(interner: DbInterner<'db>, alias_ty: AliasTy<'db>) -> Self {
+        Ty::new(interner, TyKind::Alias(alias_ty))
     }
 
     fn new_error(interner: DbInterner<'db>, guar: ErrorGuaranteed) -> Self {

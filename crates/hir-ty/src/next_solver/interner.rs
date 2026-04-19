@@ -773,6 +773,18 @@ impl<'db> inherent::AdtDef<DbInterner<'db>> for AdtDef {
     fn is_manually_drop(self) -> bool {
         self.inner().flags.is_manually_drop
     }
+
+    fn is_packed(self) -> bool {
+        false // FIXME(next-solver)
+    }
+
+    fn field_representing_type_info(
+        self,
+        _interner: DbInterner<'db>,
+        _args: GenericArgs<'db>,
+    ) -> Option<rustc_type_ir::inherent::FieldInfo<DbInterner<'db>>> {
+        None // FIXME(next-solver)
+    }
 }
 
 impl fmt::Debug for AdtDef {
@@ -803,10 +815,6 @@ impl<'db> inherent::Features<DbInterner<'db>> for Features {
     }
 
     fn coroutine_clone(self) -> bool {
-        false
-    }
-
-    fn associated_const_equality(self) -> bool {
         false
     }
 
@@ -1036,7 +1044,8 @@ impl<'db> Interner for DbInterner<'db> {
     type Term = Term<'db>;
 
     type BoundVarKinds = BoundVarKinds<'db>;
-    type BoundVarKind = BoundVarKind;
+    type Consts = crate::next_solver::consts::Consts<'db>;
+    type ScalarInt = u128;
 
     type PredefinedOpaques = PredefinedOpaques<'db>;
 
@@ -1073,8 +1082,6 @@ impl<'db> Interner for DbInterner<'db> {
     type Tys = Tys<'db>;
     type FnInputTys = &'db [Ty<'db>];
     type ParamTy = ParamTy;
-    type BoundTy = BoundTy;
-    type PlaceholderTy = PlaceholderTy;
     type Symbol = ();
 
     type ErrorGuaranteed = ErrorGuaranteed;
@@ -1086,9 +1093,7 @@ impl<'db> Interner for DbInterner<'db> {
     type Abi = FnAbi;
 
     type Const = Const<'db>;
-    type PlaceholderConst = PlaceholderConst;
     type ParamConst = ParamConst;
-    type BoundConst = BoundConst;
     type ValueConst = ValueConst<'db>;
     type ValTree = Valtree<'db>;
     type ExprConst = ExprConst;
@@ -1096,8 +1101,6 @@ impl<'db> Interner for DbInterner<'db> {
     type Region = Region<'db>;
     type EarlyParamRegion = EarlyParamRegion;
     type LateParamRegion = LateParamRegion;
-    type BoundRegion = BoundRegion;
-    type PlaceholderRegion = PlaceholderRegion;
 
     type RegionAssumptions = RegionAssumptions<'db>;
 
@@ -1230,19 +1233,33 @@ impl<'db> Interner for DbInterner<'db> {
         AdtDef::new(def_id.0, self)
     }
 
-    fn alias_ty_kind(self, alias: rustc_type_ir::AliasTy<Self>) -> AliasTyKind {
-        match alias.def_id {
-            SolverDefId::InternedOpaqueTyId(_) => AliasTyKind::Opaque,
+    fn anon_const_kind(self, _def_id: Self::DefId) -> rustc_type_ir::AnonConstKind {
+        rustc_type_ir::AnonConstKind::MCG
+    }
+
+    fn closure_is_const(self, _closure_def_id: Self::DefId) -> bool {
+        false
+    }
+
+    fn item_name(self, _def_id: Self::DefId) -> rustc_type_ir::inherent::ItemName {
+        rustc_type_ir::inherent::ItemName
+    }
+
+    fn alias_ty_kind_from_def_id(self, def_id: Self::DefId) -> rustc_type_ir::AliasTyKind<Self> {
+        match def_id {
+            SolverDefId::InternedOpaqueTyId(_) => rustc_type_ir::AliasTyKind::Opaque { def_id },
             SolverDefId::TypeAliasId(type_alias) => match type_alias.loc(self.db).container {
                 ItemContainerId::ImplId(impl_)
                     if ImplSignature::of(self.db, impl_).target_trait.is_none() =>
                 {
-                    AliasTyKind::Inherent
+                    rustc_type_ir::AliasTyKind::Inherent { def_id }
                 }
-                ItemContainerId::TraitId(_) | ItemContainerId::ImplId(_) => AliasTyKind::Projection,
-                _ => AliasTyKind::Free,
+                ItemContainerId::TraitId(_) | ItemContainerId::ImplId(_) => {
+                    rustc_type_ir::AliasTyKind::Projection { def_id }
+                }
+                _ => rustc_type_ir::AliasTyKind::Free { def_id },
             },
-            _ => unimplemented!("Unexpected alias: {:?}", alias.def_id),
+            _ => unimplemented!("Unexpected alias: {:?}", def_id),
         }
     }
 
@@ -1956,12 +1973,6 @@ impl<'db> Interner for DbInterner<'db> {
     fn trait_is_fundamental(self, trait_: Self::TraitId) -> bool {
         let trait_data = TraitSignature::of(self.db(), trait_.0);
         trait_data.flags.contains(TraitFlags::FUNDAMENTAL)
-    }
-
-    fn trait_may_be_implemented_via_object(self, _trait_def_id: Self::TraitId) -> bool {
-        // FIXME(next-solver): should check the `TraitFlags` for
-        // the `#[rustc_do_not_implement_via_object]` flag
-        true
     }
 
     fn is_impl_trait_in_trait(self, _def_id: Self::DefId) -> bool {
