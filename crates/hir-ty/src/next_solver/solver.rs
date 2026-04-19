@@ -155,10 +155,17 @@ impl<'db> SolverDelegate for SolverContext<'db> {
             fold_tys(interner, clause, |ty| match ty.kind() {
                 // Replace all other mentions of the same opaque type with the hidden type,
                 // as the bounds must hold on the hidden type after all.
-                TyKind::Alias(
-                    AliasTyKind::Opaque,
-                    AliasTy { def_id: def_id2, args: args2, .. },
-                ) if def_id == def_id2 && args == args2 => hidden_ty,
+                TyKind::Alias(alias_ty) => {
+                    if let rustc_type_ir::AliasTyKind::Opaque { def_id: def_id2 } = alias_ty.kind {
+                        if def_id == def_id2 && alias_ty.args == args {
+                            hidden_ty
+                        } else {
+                            Ty::new_alias(interner, alias_ty)
+                        }
+                    } else {
+                        Ty::new_alias(interner, alias_ty)
+                    }
+                }
                 _ => ty,
             })
         };

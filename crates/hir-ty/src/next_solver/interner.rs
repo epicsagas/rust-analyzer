@@ -782,7 +782,7 @@ impl<'db> inherent::AdtDef<DbInterner<'db>> for AdtDef {
         self,
         _interner: DbInterner<'db>,
         _args: GenericArgs<'db>,
-    ) -> Option<rustc_type_ir::inherent::FieldInfo<DbInterner<'db>>> {
+    ) -> Option<rustc_type_ir::FieldInfo<Self>> {
         None // FIXME(next-solver)
     }
 }
@@ -1044,7 +1044,7 @@ impl<'db> Interner for DbInterner<'db> {
     type Term = Term<'db>;
 
     type BoundVarKinds = BoundVarKinds<'db>;
-    type Consts = crate::next_solver::consts::Consts<'db>;
+    type Consts = ();
     type ScalarInt = u128;
 
     type PredefinedOpaques = PredefinedOpaques<'db>;
@@ -1237,12 +1237,12 @@ impl<'db> Interner for DbInterner<'db> {
         rustc_type_ir::AnonConstKind::MCG
     }
 
-    fn closure_is_const(self, _closure_def_id: Self::DefId) -> bool {
+    fn closure_is_const(self, _closure_def_id: Self::ClosureId) -> bool {
         false
     }
 
-    fn item_name(self, _def_id: Self::DefId) -> rustc_type_ir::inherent::ItemName {
-        rustc_type_ir::inherent::ItemName
+    fn item_name(self, _def_id: Self::DefId) -> Self::Symbol {
+        ()
     }
 
     fn alias_ty_kind_from_def_id(self, def_id: Self::DefId) -> rustc_type_ir::AliasTyKind<Self> {
@@ -1488,7 +1488,7 @@ impl<'db> Interner for DbInterner<'db> {
         fn is_ty_assoc_of_self(ty: Ty<'_>) -> bool {
             // FIXME: Is this correct wrt. combined kind of assoc type bounds, i.e. `where Self::Assoc: Trait<Assoc2: Trait>`
             // wrt. `Assoc2`, which we should exclude?
-            if let TyKind::Alias(AliasTyKind::Projection, alias) = ty.kind() {
+            if let TyKind::Alias(alias) = ty.kind() {
                 is_ty_assoc_of_self(alias.self_ty())
             } else {
                 is_ty_self(ty)

@@ -6,7 +6,7 @@ use macros::GenericTypeVisitable;
 use rustc_type_ir::{
     BoundVar, BoundVarIndexKind, DebruijnIndex, Flags, GenericTypeVisitable, INNERMOST, RegionVid,
     TypeFlags, TypeFoldable, TypeVisitable,
-    inherent::{IntoKind, PlaceholderLike, SliceLike},
+    inherent::{IntoKind, SliceLike},
     relate::Relate,
 };
 
@@ -223,16 +223,6 @@ impl std::fmt::Debug for EarlyParamRegion {
     }
 }
 
-impl<'db> rustc_type_ir::inherent::BoundVarLike<DbInterner<'db>> for BoundRegion {
-    fn var(self) -> BoundVar {
-        self.var
-    }
-
-    fn assert_eq(self, var: BoundVarKind) {
-        assert_eq!(self.kind, var.expect_region())
-    }
-}
-
 impl core::fmt::Debug for BoundRegion {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match &self.kind {
@@ -324,7 +314,7 @@ impl<'db> rustc_type_ir::inherent::Region<DbInterner<'db>> for Region<'db> {
     fn new_bound(
         interner: DbInterner<'db>,
         debruijn: rustc_type_ir::DebruijnIndex,
-        var: BoundRegion,
+        var: rustc_type_ir::BoundRegion<DbInterner<'db>>,
     ) -> Self {
         Region::new(interner, RegionKind::ReBound(BoundVarIndexKind::Bound(debruijn), var))
     }
@@ -359,33 +349,9 @@ impl<'db> rustc_type_ir::inherent::Region<DbInterner<'db>> for Region<'db> {
 
     fn new_placeholder(
         interner: DbInterner<'db>,
-        var: <DbInterner<'db> as rustc_type_ir::Interner>::PlaceholderRegion,
+        var: rustc_type_ir::PlaceholderRegion<DbInterner<'db>>,
     ) -> Self {
         Region::new(interner, RegionKind::RePlaceholder(var))
-    }
-}
-
-impl<'db> PlaceholderLike<DbInterner<'db>> for PlaceholderRegion {
-    type Bound = BoundRegion;
-
-    fn universe(self) -> rustc_type_ir::UniverseIndex {
-        self.universe
-    }
-
-    fn var(self) -> rustc_type_ir::BoundVar {
-        self.bound.var
-    }
-
-    fn with_updated_universe(self, ui: rustc_type_ir::UniverseIndex) -> Self {
-        Placeholder { universe: ui, bound: self.bound }
-    }
-
-    fn new(ui: rustc_type_ir::UniverseIndex, bound: Self::Bound) -> Self {
-        Placeholder { universe: ui, bound }
-    }
-
-    fn new_anon(ui: rustc_type_ir::UniverseIndex, var: rustc_type_ir::BoundVar) -> Self {
-        Placeholder { universe: ui, bound: BoundRegion { var, kind: BoundRegionKind::Anon } }
     }
 }
 

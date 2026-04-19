@@ -12,7 +12,7 @@ use macros::GenericTypeVisitable;
 use rustc_abi::{Float, Integer, Size};
 use rustc_ast_ir::{Mutability, try_visit, visit::VisitorResult};
 use rustc_type_ir::{
-    AliasTyKind, BoundVar, BoundVarIndexKind, ClosureKind, CoroutineArgs, CoroutineArgsParts,
+    BoundVar, BoundVarIndexKind, ClosureKind, CoroutineArgs, CoroutineArgsParts,
     DebruijnIndex, FlagComputation, Flags, FloatTy, FloatVid, GenericTypeVisitable, InferTy, IntTy,
     IntVid, Interner, TyVid, TypeFoldable, TypeSuperFoldable, TypeSuperVisitable, TypeVisitable,
     TypeVisitableExt, TypeVisitor, UintTy, Upcast, WithCachedTypeInfo,
@@ -39,7 +39,7 @@ use crate::{
 };
 
 use super::{
-    BoundVarKind, DbInterner, GenericArgs, Placeholder, SolverDefId,
+    DbInterner, GenericArgs, Placeholder, SolverDefId,
     util::{FloatExt, IntegerExt},
 };
 
@@ -927,7 +927,7 @@ impl<'db> TypeSuperFoldable<DbInterner<'db>> for Ty<'db> {
             TyKind::CoroutineClosure(did, args) => {
                 TyKind::CoroutineClosure(did, args.try_fold_with(folder)?)
             }
-            TyKind::Alias(kind, data) => TyKind::Alias(kind, data.try_fold_with(folder)?),
+            TyKind::Alias(data) => TyKind::Alias(data.try_fold_with(folder)?),
             TyKind::Pat(ty, pat) => {
                 TyKind::Pat(ty.try_fold_with(folder)?, pat.try_fold_with(folder)?)
             }
@@ -976,7 +976,7 @@ impl<'db> TypeSuperFoldable<DbInterner<'db>> for Ty<'db> {
             TyKind::CoroutineClosure(did, args) => {
                 TyKind::CoroutineClosure(did, args.fold_with(folder))
             }
-            TyKind::Alias(kind, data) => TyKind::Alias(kind, data.fold_with(folder)),
+            TyKind::Alias(data) => TyKind::Alias(data.fold_with(folder)),
             TyKind::Pat(ty, pat) => TyKind::Pat(ty.fold_with(folder), pat.fold_with(folder)),
 
             TyKind::Bool
@@ -1430,40 +1430,6 @@ impl<'db> TypeFoldable<DbInterner<'db>> for ErrorGuaranteed {
 impl ParamLike for ParamTy {
     fn index(self) -> u32 {
         self.index
-    }
-}
-
-impl<'db> BoundVarLike<DbInterner<'db>> for BoundTy {
-    fn var(self) -> BoundVar {
-        self.var
-    }
-
-    fn assert_eq(self, var: BoundVarKind) {
-        assert_eq!(self.kind, var.expect_ty())
-    }
-}
-
-impl<'db> PlaceholderLike<DbInterner<'db>> for PlaceholderTy {
-    type Bound = BoundTy;
-
-    fn universe(self) -> rustc_type_ir::UniverseIndex {
-        self.universe
-    }
-
-    fn var(self) -> BoundVar {
-        self.bound.var
-    }
-
-    fn with_updated_universe(self, ui: rustc_type_ir::UniverseIndex) -> Self {
-        Placeholder { universe: ui, bound: self.bound }
-    }
-
-    fn new(ui: rustc_type_ir::UniverseIndex, bound: BoundTy) -> Self {
-        Placeholder { universe: ui, bound }
-    }
-
-    fn new_anon(ui: rustc_type_ir::UniverseIndex, var: rustc_type_ir::BoundVar) -> Self {
-        Placeholder { universe: ui, bound: BoundTy { var, kind: BoundTyKind::Anon } }
     }
 }
 

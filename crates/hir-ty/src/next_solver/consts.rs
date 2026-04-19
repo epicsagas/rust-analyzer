@@ -10,7 +10,7 @@ use rustc_type_ir::{
     BoundVar, BoundVarIndexKind, ConstVid, DebruijnIndex, FlagComputation, Flags,
     GenericTypeVisitable, InferConst, TypeFoldable, TypeSuperFoldable, TypeSuperVisitable,
     TypeVisitable, TypeVisitableExt, WithCachedTypeInfo,
-    inherent::{IntoKind, ParamEnv as _, PlaceholderLike, SliceLike},
+    inherent::{IntoKind, ParamEnv as _, SliceLike},
     relate::Relate,
 };
 
@@ -217,6 +217,15 @@ pub struct Valtree<'db> {
     interned: InternedRef<'db, ValtreeInterned>,
 }
 
+impl<'db> rustc_type_ir::inherent::IntoKind for Valtree<'db> {
+    type Kind = rustc_type_ir::ValTreeKind<DbInterner<'db>>;
+
+    fn kind(self) -> Self::Kind {
+        // FIXME(next-solver): proper valtree kind
+        rustc_type_ir::ValTreeKind::Leaf(0)
+    }
+}
+
 impl<'db, V: super::WorldExposer> GenericTypeVisitable<V> for Valtree<'db> {
     fn generic_visit_with(&self, visitor: &mut V) {
         if visitor.on_interned(self.interned).is_continue() {
@@ -388,7 +397,7 @@ impl<'db> rustc_type_ir::inherent::Const<DbInterner<'db>> for Const<'db> {
         Const::new(interner, ConstKind::Infer(InferConst::Var(var)))
     }
 
-    fn new_bound(interner: DbInterner<'db>, debruijn: DebruijnIndex, var: BoundConst) -> Self {
+    fn new_bound(interner: DbInterner<'db>, debruijn: DebruijnIndex, var: rustc_type_ir::BoundConst<DbInterner<'db>>) -> Self {
         Const::new(interner, ConstKind::Bound(BoundVarIndexKind::Bound(debruijn), var))
     }
 
@@ -405,7 +414,7 @@ impl<'db> rustc_type_ir::inherent::Const<DbInterner<'db>> for Const<'db> {
 
     fn new_placeholder(
         interner: DbInterner<'db>,
-        param: <DbInterner<'db> as rustc_type_ir::Interner>::PlaceholderConst,
+        param: rustc_type_ir::PlaceholderConst<DbInterner<'db>>,
     ) -> Self {
         Const::new(interner, ConstKind::Placeholder(param))
     }
@@ -429,39 +438,6 @@ impl<'db> rustc_type_ir::inherent::Const<DbInterner<'db>> for Const<'db> {
 #[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
 pub struct BoundConst {
     pub var: BoundVar,
-}
-
-impl<'db> rustc_type_ir::inherent::BoundVarLike<DbInterner<'db>> for BoundConst {
-    fn var(self) -> BoundVar {
-        self.var
-    }
-
-    fn assert_eq(self, var: BoundVarKind) {
-        var.expect_const()
-    }
-}
-
-impl<'db> PlaceholderLike<DbInterner<'db>> for PlaceholderConst {
-    type Bound = BoundConst;
-
-    fn universe(self) -> rustc_type_ir::UniverseIndex {
-        self.universe
-    }
-
-    fn var(self) -> rustc_type_ir::BoundVar {
-        self.bound.var
-    }
-
-    fn with_updated_universe(self, ui: rustc_type_ir::UniverseIndex) -> Self {
-        Placeholder { universe: ui, bound: self.bound }
-    }
-
-    fn new(ui: rustc_type_ir::UniverseIndex, var: BoundConst) -> Self {
-        Placeholder { universe: ui, bound: var }
-    }
-    fn new_anon(ui: rustc_type_ir::UniverseIndex, var: rustc_type_ir::BoundVar) -> Self {
-        Placeholder { universe: ui, bound: BoundConst { var } }
-    }
 }
 
 impl<'db> Relate<DbInterner<'db>> for ExprConst {
