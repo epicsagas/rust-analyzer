@@ -214,10 +214,9 @@ impl<'a, 'b, 'db> PathLoweringContext<'a, 'b, 'db> {
                                 );
                                 Ty::new_alias(
                                     self.ctx.interner,
-                                    AliasTyKind::Projection,
                                     AliasTy::new_from_args(
                                         self.ctx.interner,
-                                        associated_ty.into(),
+                                        rustc_type_ir::AliasTyKind::Projection { def_id: associated_ty.into() },
                                         args,
                                     ),
                                 )
@@ -948,11 +947,10 @@ impl<'a, 'b, 'db> PathLoweringContext<'a, 'b, 'db> {
                             .lower_type_bound(
                                 bound,
                                 Ty::new_alias(
-                                    self.ctx.interner,
-                                    AliasTyKind::Projection,
+                                    $1,
                                     AliasTy::new_from_args(
-                                        self.ctx.interner,
-                                        associated_ty.into(),
+                                        $2,
+                                        rustc_type_ir::AliasTyKind::Projection { def_id: associated_ty.into() },
                                         args,
                                     ),
                                 ),

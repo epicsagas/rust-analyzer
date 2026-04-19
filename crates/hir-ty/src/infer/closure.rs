@@ -262,8 +262,12 @@ impl<'db> InferenceContext<'_, 'db> {
         closure_kind: ClosureKind,
     ) -> (Option<PolyFnSig<'db>>, Option<rustc_type_ir::ClosureKind>) {
         match expected_ty.kind() {
-            TyKind::Alias(rustc_type_ir::Opaque, AliasTy { def_id, args, .. }) => self
-                .deduce_closure_signature_from_predicates(
+            TyKind::Alias(alias_ty) => {
+                let (def_id, args) = match &alias_ty.kind {
+                    rustc_type_ir::AliasTyKind::Opaque { def_id } => (*def_id, alias_ty.args.clone()),
+                    _ => return (None, None),
+                };
+                self.deduce_closure_signature_from_predicates(
                     expected_ty,
                     closure_kind,
                     def_id
@@ -271,7 +275,8 @@ impl<'db> InferenceContext<'_, 'db> {
                         .predicates(self.db)
                         .iter_instantiated_copied(self.interner(), args.as_slice())
                         .map(|clause| clause.as_predicate()),
-                ),
+                )
+            },
             TyKind::Dynamic(object_type, ..) => {
                 let sig = object_type.projection_bounds().into_iter().find_map(|pb| {
                     let pb = pb.with_self_ty(self.interner(), Ty::new_unit(self.interner()));

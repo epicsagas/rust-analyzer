@@ -551,8 +551,7 @@ pub fn callable_sig_from_fn_trait<'db>(
     let trait_ref = TraitRef::new_from_args(table.interner(), fn_once_trait.into(), args);
     let projection = Ty::new_alias(
         table.interner(),
-        rustc_type_ir::AliasTyKind::Projection,
-        AliasTy::new_from_args(table.interner(), output_assoc_type.into(), args),
+        AliasTy::new_from_args(table.interner(), rustc_type_ir::AliasTyKind::Projection { def_id: output_assoc_type.into() }, args),
     );
 
     let pred = Predicate::upcast_from(trait_ref, table.interner());
