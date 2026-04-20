@@ -25,7 +25,10 @@ pub fn target_data_layout_query(
                     TargetDataLayoutError::MissingAlignment { cause } => format!(r#"missing alignment for `{cause}` in "data-layout""#),
                     TargetDataLayoutError::InvalidAlignment { cause, err } => format!(
                         r#"invalid alignment for `{cause}` in "data-layout": `{align}` is {err_kind}"#,
-                        align = err.align(),
+                        align = match &err {
+                            AlignFromBytesError::NotPowerOfTwo(a) => a,
+                            AlignFromBytesError::TooLarge(a) => a,
+                        },
                         err_kind = match err {
                             AlignFromBytesError::NotPowerOfTwo(_) => "not a power of two",
                             AlignFromBytesError::TooLarge(_) => "too large",

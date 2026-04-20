@@ -390,9 +390,28 @@ interned_slice!(
     BoundVarKinds,
     StoredBoundVarKinds,
     bound_var_kinds,
-    BoundVarKind,
-    BoundVarKind,
+    rustc_type_ir::BoundVariableKind<DbInterner<'db>>,
+    rustc_type_ir::BoundVariableKind<DbInterner<'static>>,
 );
+
+/// A minimal Consts list type. Used as the `Interner::Consts` associated type.
+/// FIXME(next-solver): implement properly
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, Default)]
+pub struct ConstList<'db>(&'db [Const<'db>]);
+
+impl<'db> rustc_type_ir::inherent::SliceLike for ConstList<'db> {
+    type Item = Const<'db>;
+    type IntoIter = std::iter::Copied<std::slice::Iter<'db, Const<'db>>>;
+
+    fn iter(self) -> Self::IntoIter {
+        self.0.iter().copied()
+    }
+
+    fn as_slice(&self) -> &[Self::Item] {
+        self.0
+    }
+}
+
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
 pub enum BoundVarKind {
@@ -788,7 +807,7 @@ impl<'db> inherent::AdtDef<DbInterner<'db>> for AdtDef {
         self,
         _interner: DbInterner<'db>,
         _args: GenericArgs<'db>,
-    ) -> Option<rustc_type_ir::FieldInfo<Self>> {
+    ) -> Option<rustc_type_ir::FieldInfo<DbInterner<'db>>> {
         None // FIXME(next-solver)
     }
 }
@@ -824,7 +843,7 @@ impl<'db> inherent::Features<DbInterner<'db>> for Features {
         false
     }
 
-    fn feature_bound_holds_in_crate(self, _symbol: ()) -> bool {
+    fn feature_bound_holds_in_crate(self, _symbol: InternerSymbol) -> bool {
         false
     }
 }
@@ -1028,6 +1047,16 @@ macro_rules! is_lang_item {
     }};
 }
 
+/// A minimal Symbol type for the interner.
+#[derive(Copy, Clone, Hash, PartialEq, Eq, Debug)]
+pub struct InternerSymbol;
+
+impl<I: rustc_type_ir::Interner> rustc_type_ir::inherent::Symbol<I> for InternerSymbol {
+    fn is_kw_underscore_lifetime(self) -> bool {
+        false
+    }
+}
+
 impl<'db> Interner for DbInterner<'db> {
     type DefId = SolverDefId;
     type LocalDefId = SolverDefId;
@@ -1050,7 +1079,7 @@ impl<'db> Interner for DbInterner<'db> {
     type Term = Term<'db>;
 
     type BoundVarKinds = BoundVarKinds<'db>;
-    type Consts = ();
+    type Consts = ConstList<'db>;
     type ScalarInt = u128;
 
     type PredefinedOpaques = PredefinedOpaques<'db>;
@@ -1088,7 +1117,7 @@ impl<'db> Interner for DbInterner<'db> {
     type Tys = Tys<'db>;
     type FnInputTys = &'db [Ty<'db>];
     type ParamTy = ParamTy;
-    type Symbol = ();
+    type Symbol = InternerSymbol;
 
     type ErrorGuaranteed = ErrorGuaranteed;
     type BoundExistentialPredicates = BoundExistentialPredicates<'db>;
@@ -2444,6 +2473,7 @@ macro_rules! TrivialTypeTraversalImpls {
 
 TrivialTypeTraversalImpls! {
     SolverDefId,
+    InternerSymbol,
     TraitIdWrapper,
     TypeAliasIdWrapper,
     CallableIdWrapper,

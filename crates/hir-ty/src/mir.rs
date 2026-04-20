@@ -282,7 +282,7 @@ impl ProjectionStore {
     }
 
     pub fn intern_if_exist(&self, projection: &[PlaceElem]) -> Option<ProjectionId> {
-        self.id_to_proj.iter().find(|(_, p)| *p == projection).map(|(id, _)| *id)
+        self.id_to_proj.iter().find(|(_, p)| ***p == *projection).map(|(id, _)| *id)
     }
 
     pub fn intern(&mut self, projection: Box<[PlaceElem]>) -> ProjectionId {
