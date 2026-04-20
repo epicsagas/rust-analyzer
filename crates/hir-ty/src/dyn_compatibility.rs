@@ -373,7 +373,7 @@ where
             trait_ref: pred_trait_ref,
             polarity: PredicatePolarity::Positive,
         }) = pred
-            && let trait_data = TraitSignature::of(db, $1.def_id().0)
+            && let trait_data = TraitSignature::of(db, pred_trait_ref.def_id.0)
             && trait_data.flags.contains(TraitFlags::AUTO)
             && let rustc_type_ir::TyKind::Param(ParamTy { index: 0, .. }) =
                 pred_trait_ref.self_ty().kind()
@@ -504,7 +504,7 @@ fn contains_illegal_impl_trait_in_trait<'db>(
             ty: <DbInterner<'db> as rustc_type_ir::Interner>::Ty,
         ) -> Self::Result {
             if let rustc_type_ir::TyKind::Alias(op) = ty.kind() {
-                let id = match $1.def_id() {
+                let id = match op.kind.def_id() {
                     SolverDefId::InternedOpaqueTyId(id) => id,
                     _ => unreachable!(),
                 };

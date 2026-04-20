@@ -947,9 +947,9 @@ impl<'a, 'b, 'db> PathLoweringContext<'a, 'b, 'db> {
                             .lower_type_bound(
                                 bound,
                                 Ty::new_alias(
-                                    $1,
+                                    interner,
                                     AliasTy::new_from_args(
-                                        $2,
+                                        interner,
                                         rustc_type_ir::AliasTyKind::Projection { def_id: associated_ty.into() },
                                         args,
                                     ),

@@ -1291,7 +1291,7 @@ impl<'db> HirDisplay<'db> for Ty<'db> {
                 f.end_location_link();
             }
             TyKind::Alias(alias_ty) => {
-                let opaque_ty_id = match $1.def_id() {
+                let opaque_ty_id = match alias_ty.kind.def_id() {
                     SolverDefId::InternedOpaqueTyId(id) => id,
                     _ => unreachable!(),
                 };
@@ -2032,7 +2032,7 @@ pub fn write_params_bounds<'db>(
 
 impl<'db> HirDisplay<'db> for TraitRef<'db> {
     fn hir_fmt(&self, f: &mut HirFormatter<'_, 'db>) -> Result {
-        let trait_ = $1.def_id().0;
+        let trait_ = self.def_id.0;
         f.start_location_link(trait_.into());
         write!(f, "{}", TraitSignature::of(f.db, trait_).name.display(f.db, f.edition()))?;
         f.end_location_link();

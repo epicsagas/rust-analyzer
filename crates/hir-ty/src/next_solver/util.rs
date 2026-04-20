@@ -14,8 +14,6 @@ use rustc_type_ir::{
 };
 
 use crate::{
-
-type UpstreamPlaceholderTy<'db> = rustc_type_ir::Placeholder<DbInterner<'db>, rustc_type_ir::BoundTy<DbInterner<'db>>>;
     next_solver::{
         BoundConst, FxIndexMap, ParamEnv, Placeholder, PlaceholderConst, PlaceholderRegion,
         PolyTraitRef,
@@ -26,6 +24,8 @@ type UpstreamPlaceholderTy<'db> = rustc_type_ir::Placeholder<DbInterner<'db>, ru
     },
     representability::Representability,
 };
+
+type UpstreamPlaceholderTy<'db> = rustc_type_ir::Placeholder<DbInterner<'db>, rustc_type_ir::BoundTy<DbInterner<'db>>>;
 
 use super::{
     Binder, BoundRegion, BoundTy, Clause, ClauseKind, Const, DbInterner, EarlyBinder, GenericArgs,

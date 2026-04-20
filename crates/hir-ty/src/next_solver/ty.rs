@@ -18,7 +18,7 @@ use rustc_type_ir::{
     TypeVisitableExt, TypeVisitor, UintTy, Upcast, WithCachedTypeInfo,
     inherent::{
         AdtDef as _, BoundExistentialPredicates,
-        IntoKind, ParamLike, Safety as _, SliceLike, Ty as _,
+        Const as _, GenericArgs as _, IntoKind, ParamLike, Safety as _, SliceLike, Ty as _,
     },
     relate::Relate,
     solve::SizedTraitKind,
@@ -104,7 +104,7 @@ impl<'db> Ty<'db> {
                 crate::next_solver::ty::BoundTyKind::Param(id) => rustc_type_ir::BoundTyKind::Param(id),
             },
         };
-        let upstream = rustc_type_ir::Placeholder::new(placeholder.universe, upstream_bound);
+        let upstream = <rustc_type_ir::Placeholder<DbInterner<'db>, rustc_type_ir::BoundTy<DbInterner<'db>>>>::new(placeholder.universe, upstream_bound);
         Ty::new(interner, TyKind::Placeholder(upstream))
     }
 
@@ -691,7 +691,8 @@ impl<'db> Ty<'db> {
             TyKind::Alias(alias_ty) => match alias_ty.kind {
                 rustc_type_ir::AliasTyKind::Opaque { .. } => Some(
                 alias_ty
-                    .def_id
+                    .kind
+                    .def_id()
                     .expect_opaque_ty()
                     .predicates(db)
                     .iter_instantiated_copied(interner, alias_ty.args.as_slice())
@@ -754,7 +755,7 @@ impl<'db> Ty<'db> {
             }
             (TyKind::FnDef(def_id, ..), TyKind::FnDef(def_id2, ..)) => def_id == def_id2,
             (TyKind::Alias(alias), TyKind::Alias(alias2)) => {
-                alias.def_id() == alias2.def_id()
+                alias.kind.def_id() == alias2.kind.def_id()
             }
             (TyKind::Foreign(ty_id, ..), TyKind::Foreign(ty_id2, ..)) => ty_id == ty_id2,
             (TyKind::Closure(id1, _), TyKind::Closure(id2, _)) => id1 == id2,
