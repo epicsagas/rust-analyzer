@@ -83,7 +83,7 @@ use crate::{
     infer::unify::InferenceTable,
     lower::SupertraitsInfo,
     next_solver::{
-        AliasTy, Binder, BoundConst, BoundRegion, BoundRegionKind, BoundTy, BoundTyKind, Canonical,
+        AliasTy, Binder, BoundConst, Canonical,
         CanonicalVarKind, CanonicalVars, ClauseKind, Const, ConstKind, DbInterner, FnSig,
         GenericArgs, PolyFnSig, Predicate, Region, RegionKind, TraitRef, Ty, TyKind, Tys, abi,
     },

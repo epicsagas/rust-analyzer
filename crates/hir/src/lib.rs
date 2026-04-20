@@ -21,8 +21,7 @@
 #![recursion_limit = "512"]
 
 extern crate ra_ap_rustc_type_ir as rustc_type_ir;
-use ra_ap_rustc_index::idx::Idx as _;
-use ra_ap_rustc_index::idx::Idx as _;
+use ra_ap_rustc_index::Idx as _;
 
 mod attrs;
 mod from_id;

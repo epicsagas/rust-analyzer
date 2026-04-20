@@ -39,7 +39,7 @@ use rustc_apfloat::{
 use rustc_ast_ir::FloatTy;
 use rustc_hash::FxHashSet;
 use rustc_type_ir::{
-    AliasTyKind, BoundVarIndexKind, CoroutineArgsParts, CoroutineClosureArgsParts, RegionKind,
+    BoundVarIndexKind, CoroutineArgsParts, CoroutineClosureArgsParts, RegionKind,
     Upcast,
     inherent::{AdtDef, GenericArgs as _, IntoKind, Term as _, Ty as _, Tys as _},
 };
@@ -1282,44 +1282,48 @@ impl<'db> HirDisplay<'db> for Ty<'db> {
                 hir_fmt_generics(f, parameters.as_slice(), Some(def.def_id().0.into()), None)?;
             }
             TyKind::Alias(alias_ty) => {
-                write_projection(f, &alias_ty, trait_bounds_need_parens)?
+                match alias_ty.kind.def_id() {
+                    SolverDefId::InternedOpaqueTyId(_) => {
+                        let opaque_ty_id = match alias_ty.kind.def_id() {
+                            SolverDefId::InternedOpaqueTyId(id) => id,
+                            _ => unreachable!(),
+                        };
+                        if !f.display_kind.allows_opaque() {
+                            return Err(HirDisplayError::DisplaySourceCodeError(
+                                DisplaySourceCodeError::OpaqueType,
+                            ));
+                        }
+                        let impl_trait_id = db.lookup_intern_impl_trait_id(opaque_ty_id);
+                        let data = impl_trait_id.predicates(db);
+                        let bounds = data
+                            .iter_instantiated_copied(interner, alias_ty.args.as_slice())
+                            .collect::<Vec<_>>();
+                        let krate = match impl_trait_id {
+                            ImplTraitId::ReturnTypeImplTrait(func, _) => {
+                                func.krate(db)
+                                // FIXME: it would maybe be good to distinguish this from the alias type (when debug printing), and to show the substitution
+                            }
+                            ImplTraitId::TypeAliasImplTrait(alias, _) => alias.krate(db),
+                        };
+                        write_bounds_like_dyn_trait_with_prefix(
+                            f,
+                            "impl",
+                            Either::Left(*self),
+                            &bounds,
+                            SizedByDefault::Sized { anchor: krate },
+                            trait_bounds_need_parens,
+                        )?;
+                    }
+                    _ => {
+                        write_projection(f, &alias_ty, trait_bounds_need_parens)?;
+                    }
+                }
             }
             TyKind::Foreign(alias) => {
                 let type_alias = TypeAliasSignature::of(db, alias.0);
                 f.start_location_link(alias.0.into());
                 write!(f, "{}", type_alias.name.display(f.db, f.edition()))?;
                 f.end_location_link();
-            }
-            TyKind::Alias(alias_ty) => {
-                let opaque_ty_id = match alias_ty.kind.def_id() {
-                    SolverDefId::InternedOpaqueTyId(id) => id,
-                    _ => unreachable!(),
-                };
-                if !f.display_kind.allows_opaque() {
-                    return Err(HirDisplayError::DisplaySourceCodeError(
-                        DisplaySourceCodeError::OpaqueType,
-                    ));
-                }
-                let impl_trait_id = db.lookup_intern_impl_trait_id(opaque_ty_id);
-                let data = impl_trait_id.predicates(db);
-                let bounds = data
-                    .iter_instantiated_copied(interner, alias_ty.args.as_slice())
-                    .collect::<Vec<_>>();
-                let krate = match impl_trait_id {
-                    ImplTraitId::ReturnTypeImplTrait(func, _) => {
-                        func.krate(db)
-                        // FIXME: it would maybe be good to distinguish this from the alias type (when debug printing), and to show the substitution
-                    }
-                    ImplTraitId::TypeAliasImplTrait(alias, _) => alias.krate(db),
-                };
-                write_bounds_like_dyn_trait_with_prefix(
-                    f,
-                    "impl",
-                    Either::Left(*self),
-                    &bounds,
-                    SizedByDefault::Sized { anchor: krate },
-                    trait_bounds_need_parens,
-                )?;
             }
             TyKind::Closure(id, substs) => {
                 let id = id.0;
@@ -1597,7 +1601,6 @@ impl<'db> HirDisplay<'db> for Ty<'db> {
             TyKind::CoroutineWitness(..) => write!(f, "{{coroutine witness}}")?,
             TyKind::Pat(_, _) => write!(f, "{{pat}}")?,
             TyKind::UnsafeBinder(_) => write!(f, "{{unsafe binder}}")?,
-            TyKind::Alias(_) => write!(f, "{{alias}}")?,
         }
         Ok(())
     }
