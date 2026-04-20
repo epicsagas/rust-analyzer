@@ -7,7 +7,7 @@ mod intra_doc_links;
 
 use std::ops::Range;
 
-use pulldown_cmark::{BrokenLink, CowStr, Event, InlineStr, LinkType, Options, Parser, Tag};
+use pulldown_cmark::{BrokenLink, CowStr, Event, InlineStr, LinkType, Options, Parser, Tag, TagEnd};
 use pulldown_cmark_to_cmark::{Options as CMarkOptions, cmark_with_options};
 use stdx::format_to;
 use url::Url;
@@ -108,9 +108,9 @@ pub(crate) fn remove_links(markdown: &str) -> String {
     };
     let doc = Parser::new_with_broken_link_callback(markdown, MARKDOWN_OPTIONS, Some(&mut cb));
     let doc = doc.filter_map(move |evt| match evt {
-        Event::Start(Tag::Link(link_type, target, title)) => {
-            if link_type == LinkType::Inline && target.contains("://") {
-                Some(Event::Start(Tag::Link(link_type, target, title)))
+        Event::Start(Tag::Link { link_type, dest_url, title, .. }) => {
+            if link_type == LinkType::Inline && dest_url.contains("://") {
+                Some(Event::Start(Tag::Link { link_type, dest_url, title, id: "".into() }))
             } else {
                 drop_link = true;
                 None
@@ -194,7 +194,7 @@ pub(crate) fn extract_definitions_from_docs(
     )
     .into_offset_iter()
     .filter_map(|(event, range)| match event {
-        Event::Start(Tag::Link(_, target, _)) => {
+        Event::Start(Tag::Link { dest_url: target, .. }) => {
             let (link, ns) = parse_intra_doc_link(&target);
             Some((
                 TextRange::new(range.start.try_into().ok()?, range.end.try_into().ok()?),
@@ -449,6 +449,7 @@ fn rewrite_intra_doc_link(
         LinkType::ShortcutUnknown | LinkType::CollapsedUnknown | LinkType::ReferenceUnknown => {
             strip_prefixes_suffixes(title).to_owned()
         }
+        LinkType::WikiLink { .. } => title.to_owned(),
     };
 
     Some((url.into(), title))
@@ -494,19 +495,15 @@ fn map_links<'e>(
     let mut end_link_type: Option<LinkType> = None;
 
     events.map(move |(evt, range)| match evt {
-        Event::Start(Tag::Link(link_type, ref target, _)) => {
+        Event::Start(Tag::Link { link_type, ref dest_url, .. }) => {
             in_link = true;
-            end_link_target = Some(target.clone());
+            end_link_target = Some(dest_url.clone());
             end_link_type = Some(link_type);
             evt
         }
-        Event::End(Tag::Link(link_type, target, _)) => {
+        Event::End(TagEnd::Link) => {
             in_link = false;
-            Event::End(Tag::Link(
-                end_link_type.take().unwrap_or(link_type),
-                end_link_target.take().unwrap_or(target),
-                CowStr::Borrowed(""),
-            ))
+            Event::End(TagEnd::Link)
         }
         Event::Text(s) if in_link => {
             let (link_type, link_target_s, link_name) =

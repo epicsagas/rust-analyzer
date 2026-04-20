@@ -1,5 +1,5 @@
 //! Removes markdown from strings.
-use pulldown_cmark::{Event, Parser, Tag};
+use pulldown_cmark::{Event, Parser, TagEnd};
 
 /// Removes all markdown, keeping the text and code blocks
 ///
@@ -13,13 +13,16 @@ pub(crate) fn remove_markdown(markdown: &str) -> String {
         match event {
             Event::Text(text) | Event::Code(text) => out.push_str(&text),
             Event::SoftBreak => out.push(' '),
-            Event::HardBreak | Event::Rule | Event::End(Tag::CodeBlock(_)) => out.push('\n'),
-            Event::End(Tag::Paragraph) => out.push_str("\n\n"),
+            Event::HardBreak | Event::Rule | Event::End(TagEnd::CodeBlock) => out.push('\n'),
+            Event::End(TagEnd::Paragraph) => out.push_str("\n\n"),
             Event::Start(_)
             | Event::End(_)
             | Event::Html(_)
             | Event::FootnoteReference(_)
-            | Event::TaskListMarker(_) => (),
+            | Event::TaskListMarker(_)
+            | Event::InlineMath(_)
+            | Event::DisplayMath(_)
+            | Event::InlineHtml(_) => (),
         }
     }
 
