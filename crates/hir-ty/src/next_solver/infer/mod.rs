@@ -1098,9 +1098,9 @@ impl<'db> InferCtxt<'db> {
 
         for bound_var_kind in bound_vars {
             let arg: GenericArg<'db> = match bound_var_kind {
-                BoundVarKind::Ty(_) => self.next_ty_var().into(),
-                BoundVarKind::Region(_) => self.next_region_var().into(),
-                BoundVarKind::Const => self.next_const_var().into(),
+                rustc_type_ir::BoundVariableKind::Ty(_) => self.next_ty_var().into(),
+                rustc_type_ir::BoundVariableKind::Region(_) => self.next_region_var().into(),
+                rustc_type_ir::BoundVariableKind::Const => self.next_const_var().into(),
             };
             args.push(arg);
         }

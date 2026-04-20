@@ -1277,7 +1277,7 @@ impl<'db> Interner for DbInterner<'db> {
     }
 
     fn item_name(self, _def_id: Self::DefId) -> Self::Symbol {
-        ()
+        InternerSymbol
     }
 
     fn alias_ty_kind_from_def_id(self, def_id: Self::DefId) -> rustc_type_ir::AliasTyKind<Self> {
@@ -2115,15 +2115,22 @@ impl<'db> Interner for DbInterner<'db> {
     ) -> rustc_type_ir::Binder<Self, T> {
         struct Anonymize<'a, 'db> {
             interner: DbInterner<'db>,
-            map: &'a mut FxIndexMap<BoundVar, BoundVarKind>,
+            map: &'a mut FxIndexMap<BoundVar, rustc_type_ir::BoundVariableKind<DbInterner<'db>>>,
         }
         impl<'db> BoundVarReplacerDelegate<'db> for Anonymize<'_, 'db> {
             fn replace_region(&mut self, br: BoundRegion) -> Region<'db> {
                 let entry = self.map.entry(br.var);
                 let index = entry.index();
                 let var = BoundVar::from_usize(index);
-                let kind = (*entry.or_insert_with(|| BoundVarKind::Region(BoundRegionKind::Anon)))
+                let kind_upstream = (*entry.or_insert_with(|| rustc_type_ir::BoundVariableKind::Region(rustc_type_ir::BoundRegionKind::Anon)))
                     .expect_region();
+                // Convert upstream BoundRegionKind back to local
+                let kind = match kind_upstream {
+                    rustc_type_ir::BoundRegionKind::Anon => BoundRegionKind::Anon,
+                    rustc_type_ir::BoundRegionKind::Named(id) => BoundRegionKind::Named(id),
+                    rustc_type_ir::BoundRegionKind::ClosureEnv => BoundRegionKind::ClosureEnv,
+                    _ => BoundRegionKind::Anon,
+                };
                 let br = BoundRegion { var, kind };
                 Region::new_bound(self.interner, DebruijnIndex::ZERO, br)
             }
@@ -2132,12 +2139,12 @@ impl<'db> Interner for DbInterner<'db> {
                 let index = entry.index();
                 let var = BoundVar::from_usize(index);
                 let kind =
-                    (*entry.or_insert_with(|| BoundVarKind::Ty(BoundTyKind::Anon))).expect_ty();
+                    (*entry.or_insert_with(|| rustc_type_ir::BoundVariableKind::Ty(rustc_type_ir::BoundTyKind::Anon))).expect_ty();
                 Ty::new_bound(self.interner, DebruijnIndex::ZERO, rustc_type_ir::BoundTy {
                         var,
                         kind: match kind {
-                            crate::next_solver::ty::BoundTyKind::Anon => rustc_type_ir::BoundTyKind::Anon,
-                            crate::next_solver::ty::BoundTyKind::Param(id) => rustc_type_ir::BoundTyKind::Param(id),
+                            rustc_type_ir::BoundTyKind::Anon => rustc_type_ir::BoundTyKind::Anon,
+                            rustc_type_ir::BoundTyKind::Param(id) => rustc_type_ir::BoundTyKind::Param(id),
                         },
                     })
             }
@@ -2145,7 +2152,7 @@ impl<'db> Interner for DbInterner<'db> {
                 let entry = self.map.entry(bv.var);
                 let index = entry.index();
                 let var = BoundVar::from_usize(index);
-                let () = (*entry.or_insert_with(|| BoundVarKind::Const)).expect_const();
+                let () = (*entry.or_insert_with(|| rustc_type_ir::BoundVariableKind::Const)).expect_const();
                 Const::new_bound(self.interner, DebruijnIndex::ZERO, BoundConst { var })
             }
         }

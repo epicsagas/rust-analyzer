@@ -1294,7 +1294,11 @@ impl<'db> SourceAnalyzer<'db> {
                         )
                     }
                     TyKind::Alias(alias) => {
-                        let assoc_id = alias.def_id.expect_type_alias();
+                        let def_id = match alias.kind {
+                            AliasTyKind::Projection { def_id } => def_id,
+                            _ => return None,
+                        };
+                        let assoc_id = def_id.expect_type_alias();
                         (
                             GenericSubstitution::new(assoc_id.into(), alias.args, env),
                             PathResolution::Def(ModuleDef::TypeAlias(assoc_id.into())),

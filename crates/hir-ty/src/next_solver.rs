@@ -274,7 +274,7 @@ pub fn default_types<'a, 'db>(db: &'db dyn HirDatabase) -> &'a DefaultAny<'db> {
             one_invariant: create_variances_of(&[rustc_type_ir::Variance::Invariant]),
             one_covariant: create_variances_of(&[rustc_type_ir::Variance::Covariant]),
             coroutine_captures_by_ref_bound_var_kinds: create_bound_var_kinds(&[
-                BoundVarKind::Region(BoundRegionKind::ClosureEnv),
+                rustc_type_ir::BoundVariableKind::Region(rustc_type_ir::BoundRegionKind::ClosureEnv),
             ]),
         }
     })

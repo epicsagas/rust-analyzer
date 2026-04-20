@@ -499,9 +499,9 @@ impl<'db> TypeVisitor<DbInterner<'db>> for ContainsTypeErrors {
 /// The inverse of [`BoundVarReplacer`]: replaces placeholders with the bound vars from which they came.
 pub struct PlaceholderReplacer<'a, 'db> {
     infcx: &'a InferCtxt<'db>,
-    mapped_regions: FxIndexMap<PlaceholderRegion, rustc_type_ir::BoundRegion<DbInterner<'db>>>,
+    mapped_regions: FxIndexMap<rustc_type_ir::PlaceholderRegion<DbInterner<'db>>, rustc_type_ir::BoundRegion<DbInterner<'db>>>,
     mapped_types: FxIndexMap<UpstreamPlaceholderTy<'db>, rustc_type_ir::BoundTy<DbInterner<'db>>>,
-    mapped_consts: FxIndexMap<PlaceholderConst, rustc_type_ir::BoundConst<DbInterner<'db>>>,
+    mapped_consts: FxIndexMap<rustc_type_ir::PlaceholderConst<DbInterner<'db>>, rustc_type_ir::BoundConst<DbInterner<'db>>>,
     universe_indices: &'a [Option<UniverseIndex>],
     current_index: DebruijnIndex,
 }
@@ -509,9 +509,9 @@ pub struct PlaceholderReplacer<'a, 'db> {
 impl<'a, 'db> PlaceholderReplacer<'a, 'db> {
     pub fn replace_placeholders<T: TypeFoldable<DbInterner<'db>>>(
         infcx: &'a InferCtxt<'db>,
-        mapped_regions: FxIndexMap<PlaceholderRegion, rustc_type_ir::BoundRegion<DbInterner<'db>>>,
+        mapped_regions: FxIndexMap<rustc_type_ir::PlaceholderRegion<DbInterner<'db>>, rustc_type_ir::BoundRegion<DbInterner<'db>>>,
         mapped_types: FxIndexMap<UpstreamPlaceholderTy<'db>, rustc_type_ir::BoundTy<DbInterner<'db>>>,
-        mapped_consts: FxIndexMap<PlaceholderConst, rustc_type_ir::BoundConst<DbInterner<'db>>>,
+        mapped_consts: FxIndexMap<rustc_type_ir::PlaceholderConst<DbInterner<'db>>, rustc_type_ir::BoundConst<DbInterner<'db>>>,
         universe_indices: &'a [Option<UniverseIndex>],
         value: T,
     ) -> T {
