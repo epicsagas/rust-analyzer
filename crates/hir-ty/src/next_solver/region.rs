@@ -17,7 +17,7 @@ use crate::next_solver::{
 
 use super::{
     SolverDefId,
-    interner::{BoundVarKind, DbInterner, Placeholder},
+    interner::{DbInterner, Placeholder},
 };
 
 pub type RegionKind<'db> = rustc_type_ir::RegionKind<DbInterner<'db>>;

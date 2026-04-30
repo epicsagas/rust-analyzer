@@ -6,7 +6,7 @@ use hir_def::{
 };
 use rustc_next_trait_solver::delegate::SolverDelegate;
 use rustc_type_ir::{
-    AliasTyKind, GenericArgKind, InferCtxtLike, Interner, PredicatePolarity, TypeFlags,
+    GenericArgKind, InferCtxtLike, Interner, PredicatePolarity, TypeFlags,
     TypeVisitableExt,
     inherent::{IntoKind, Term as _, Ty as _},
     lang_items::SolverTraitLangItem,
@@ -15,7 +15,7 @@ use rustc_type_ir::{
 use tracing::debug;
 
 use crate::next_solver::{
-    AliasTy, AnyImplId, CanonicalVarKind, Clause, ClauseKind, CoercePredicate, GenericArgs,
+    AnyImplId, CanonicalVarKind, Clause, ClauseKind, CoercePredicate, GenericArgs,
     ParamEnv, Predicate, PredicateKind, SubtypePredicate, Ty, TyKind, fold::fold_tys,
     util::sizedness_fast_path,
 };

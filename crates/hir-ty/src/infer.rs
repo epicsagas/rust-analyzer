@@ -51,7 +51,7 @@ use la_arena::ArenaMap;
 use rustc_ast_ir::Mutability;
 use rustc_hash::{FxHashMap, FxHashSet};
 use rustc_type_ir::{
-    AliasTyKind, TypeFoldable,
+    TypeFoldable,
     inherent::{AdtDef, IntoKind, Ty as _},
 };
 use span::Edition;

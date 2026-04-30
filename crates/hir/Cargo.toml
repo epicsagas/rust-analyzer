@@ -23,6 +23,7 @@ tracing = { workspace = true, features = ["attributes"] }
 triomphe.workspace = true
 
 ra-ap-rustc_type_ir.workspace = true
+ra-ap-rustc_index.workspace = true
 
 # local deps
 base-db.workspace = true

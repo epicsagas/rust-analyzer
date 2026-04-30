@@ -18,7 +18,7 @@ use hir_def::{
     type_ref::{TypeRef, TypeRefId},
 };
 use rustc_type_ir::{
-    AliasTerm, AliasTy, AliasTyKind,
+    AliasTerm, AliasTy,
     inherent::{GenericArgs as _, Region as _, Ty as _},
 };
 use smallvec::SmallVec;

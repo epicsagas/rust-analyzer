@@ -29,7 +29,6 @@ use rustc_apfloat::{
 use rustc_ast_ir::Mutability;
 use rustc_hash::{FxHashMap, FxHashSet};
 use rustc_type_ir::{
-    AliasTyKind,
     inherent::{AdtDef, GenericArgs as _, IntoKind, Region as _, SliceLike, Ty as _},
 };
 use span::FileId;

@@ -15,8 +15,7 @@ use rustc_type_ir::{
 
 use crate::{
     next_solver::{
-        BoundConst, FxIndexMap, ParamEnv, Placeholder, PlaceholderConst, PlaceholderRegion,
-        PolyTraitRef,
+        BoundConst, FxIndexMap, ParamEnv, PolyTraitRef,
         infer::{
             InferCtxt,
             traits::{Obligation, ObligationCause, PredicateObligation},

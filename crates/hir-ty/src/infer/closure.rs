@@ -22,7 +22,7 @@ use crate::{
     db::{InternedClosure, InternedCoroutine},
     infer::{BreakableKind, Diverges, coerce::CoerceMany},
     next_solver::{
-        AliasTy, Binder, ClauseKind, DbInterner, ErrorGuaranteed, FnSig, GenericArgs, PolyFnSig,
+        Binder, ClauseKind, DbInterner, ErrorGuaranteed, FnSig, GenericArgs, PolyFnSig,
         PolyProjectionPredicate, Predicate, PredicateKind, SolverDefId, Ty, TyKind,
         abi::Safety,
         infer::{

@@ -19,7 +19,7 @@ use tracing::debug;
 use crate::next_solver::infer::InferCtxt;
 use crate::next_solver::{
     Binder, Canonical, CanonicalVarKind, CanonicalVars, Const, ConstKind, DbInterner, GenericArg,
-    Placeholder, Region, Ty, TyKind,
+    Region, Ty, TyKind,
 };
 
 /// When we canonicalize a value to form a query, we wind up replacing

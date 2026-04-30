@@ -30,7 +30,7 @@ use unify_key::{ConstVariableOrigin, ConstVariableValue, ConstVidKey};
 
 pub use crate::next_solver::infer::traits::ObligationInspector;
 use crate::next_solver::{
-    ArgOutlivesPredicate, BoundConst, BoundRegion, BoundTy, BoundVarKind, Goal, Predicate,
+    ArgOutlivesPredicate, BoundConst, BoundRegion, BoundTy, Goal, Predicate,
     SolverContext,
     fold::BoundVarReplacerDelegate,
     infer::{at::ToTrace, select::EvaluationResult, traits::PredicateObligation},

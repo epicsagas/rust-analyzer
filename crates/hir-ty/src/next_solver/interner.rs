@@ -25,7 +25,7 @@ use rustc_abi::{ReprFlags, ReprOptions};
 use rustc_hash::FxHashSet;
 use rustc_index::bit_set::DenseBitSet;
 use rustc_type_ir::{
-    AliasTermKind, AliasTyKind, BoundVar, CoroutineWitnessTypes, DebruijnIndex, EarlyBinder,
+    AliasTermKind, BoundVar, CoroutineWitnessTypes, DebruijnIndex, EarlyBinder,
     FlagComputation, Flags, GenericArgKind, GenericTypeVisitable, ImplPolarity, InferTy, Interner,
     TraitRef, TypeFlags, TypeVisitableExt, UniverseIndex, Upcast, Variance,
     elaborate::elaborate,
@@ -53,13 +53,13 @@ use crate::{
 use super::{
     Binder, BoundExistentialPredicates, BoundTy, BoundTyKind, Clause, ClauseKind, Clauses, Const,
     ErrorGuaranteed, ExprConst, ExternalConstraints, GenericArg, GenericArgs, ParamConst, ParamEnv,
-    ParamTy, PlaceholderConst, PlaceholderTy, PredefinedOpaques, Predicate, SolverDefId, Term, Ty,
+    ParamTy, PredefinedOpaques, Predicate, SolverDefId, Term, Ty,
     TyKind, Tys, Valtree, ValueConst,
     abi::Safety,
     fold::{BoundVarReplacer, BoundVarReplacerDelegate, FnMutDelegate},
     generics::{Generics, generics},
     region::{
-        BoundRegion, BoundRegionKind, EarlyParamRegion, LateParamRegion, PlaceholderRegion, Region,
+        BoundRegion, BoundRegionKind, EarlyParamRegion, LateParamRegion, Region,
     },
     util::sizedness_constraint_for_ty,
 };

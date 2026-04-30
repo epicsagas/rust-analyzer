@@ -11,7 +11,7 @@ use hir_def::{
 };
 use rustc_hash::FxHashSet;
 use rustc_type_ir::{
-    AliasTyKind, ClauseKind, PredicatePolarity, TypeSuperVisitable as _, TypeVisitable as _,
+    ClauseKind, PredicatePolarity, TypeSuperVisitable as _, TypeVisitable as _,
     Upcast, elaborate, inherent::IntoKind,
 };
 use smallvec::SmallVec;

@@ -61,7 +61,7 @@ use crate::{
         AllowTwoPhase, AutoBorrowMutability, InferenceContext, TypeMismatch, expr::ExprIsRead,
     },
     next_solver::{
-        Binder, BoundConst, BoundRegion, BoundRegionKind, BoundTy, BoundTyKind, CallableIdWrapper,
+        Binder, BoundConst, BoundRegion, BoundRegionKind, CallableIdWrapper,
         Canonical, ClauseKind, CoercePredicate, Const, ConstKind, DbInterner, ErrorGuaranteed,
         GenericArgs, ParamEnv, PolyFnSig, PredicateKind, Region, RegionKind, TraitRef, Ty, TyKind,
         TypingMode,

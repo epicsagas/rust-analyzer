@@ -1,6 +1,6 @@
 //! MIR definitions and implementation
 
-use std::{collections::hash_map::Entry, fmt::Display, iter};
+use std::{fmt::Display, iter};
 
 use base_db::Crate;
 use either::Either;

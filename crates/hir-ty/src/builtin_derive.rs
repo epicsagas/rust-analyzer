@@ -12,7 +12,7 @@ use hir_def::{
 use itertools::Itertools;
 use la_arena::ArenaMap;
 use rustc_type_ir::{
-    AliasTyKind, Interner, TypeFoldable, TypeSuperVisitable, TypeVisitable, TypeVisitor, Upcast,
+    Interner, TypeFoldable, TypeSuperVisitable, TypeVisitable, TypeVisitor, Upcast,
     inherent::{GenericArgs as _, IntoKind},
 };
 
